@@ -2,6 +2,8 @@ package main
 
 import (
 	d "D7024E"
+	"log"
+	"net"
 )
 
 const (
@@ -14,5 +16,48 @@ func main() {
 	me := d.NewContact(id, ip)
 	k := d.NewKademlia(me, port)
 
+	//myip := GetOutboundIP()
+	//log.Printf("IP Address: %d", myip)
+	ListIPs()
+
 	d.Listen(k, ip, port)
+}
+
+// gets preferred outbound IP
+func GetOutboundIP() net.IP {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP
+}
+
+// prints all IPs
+func ListIPs() {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		log.Fatal(err)
+	}
+	count := 1
+	for _, i := range ifaces {
+		addrs, err := i.Addrs()
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			log.Printf("IP Address %d: %d", count, ip)
+			count++
+		}
+	}
 }
