@@ -1,0 +1,34 @@
+syntax = "proto3";
+package pb;
+
+
+message Message {
+    enum MessageType {
+        PING = 0;
+        FIND_NODE = 1;
+        FIND_VALUE = 2;
+        STORE = 3;
+    }
+    int32 messageID = 1;
+    int32 requestID = 2;
+    MessageType type = 3;
+    bool response = 4;
+    bytes key = 5;
+    Peer sender = 6;
+    Peer receiver = 7;
+    Data data = 8;
+
+    int64 sent_time = 9;
+}
+
+
+message Peer {
+    int32 id = 1;
+    string addr = 2;
+}
+
+message Data {
+    //FIND_NODE
+    repeated Peer closestPeers = 1;
+    //FIND_VALUE record
+}
