@@ -13,12 +13,14 @@ type Network struct {
 	port        string
 	addr        string
 	msgHandlers map[int32]*MessageHandler
+	msgCounter  int32
 }
 
 func NewNetwork(port, addr string) *Network {
 	netw := &Network{port: port,
 		addr:        addr,
-		msgHandlers: make(map[int32]*MessageHandler)}
+		msgHandlers: make(map[int32]*MessageHandler),
+		msgCounter:  0}
 	return netw
 }
 
@@ -116,11 +118,14 @@ func (n *Network) SendMessage(c *Contact,
 	return nil, nil
 }
 
-func (n *Network) SendPingMessage(c *Contact) (*MessageHandler, error) {
+func (n *Network) SendPingMessage(tar, me *Contact, reqID int32) (*MessageHandler, error) {
 	//create ping message
+	msg := pb.NewMessage(pb.Message_PING, reqID, nil,
+		ContactInfoToPeer(me), ContactInfoToPeer(tar))
+	msg.MessageID = n.msgCounter
+	n.msgCounter++
 	//call SendMessage
-	//these functions may be unnecessary since we'll have a function for each RPC request anyway
-	return nil, nil
+	return n.SendMessage(tar, msg, true)
 }
 
 func (n *Network) SendFindContactMessage(c *Contact) (*MessageHandler, error) {

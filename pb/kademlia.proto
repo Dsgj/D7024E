@@ -23,7 +23,7 @@ message Message {
 
 
 message Peer {
-    int32 id = 1;
+    string id = 1;
     string addr = 2;
 }
 
