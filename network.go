@@ -73,15 +73,7 @@ func Listen(k *Kademlia, ip string, port string) error {
 			returnCh <- msg
 			delete(network.msgHandlers, reqID)
 		} else {
-			handler := k.getTypeHandler(msg.GetType())
-			respMsg, err := handler(msg)
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Printf("Sent response message %d sent at %s",
-				respMsg.GetMessageID(),
-				time.Unix(respMsg.GetSentTime(), 0))
-
+			go k.handleMessage(msg)
 		}
 	}
 }
@@ -123,6 +115,16 @@ func (n *Network) SendMessage(c *Contact,
 	}
 
 	return nil, nil
+}
+
+func (k *Kademlia) handleMessage(msg *pb.Message) {
+	handler := k.getTypeHandler(msg.GetType())
+	respMsg, err := handler(msg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	receiver := PeerToContact(respMsg.GetReceiver())
+	_, err = k.netw.SendMessage(receiver, respMsg, false)
 }
 
 // Dont use these. Instead, create a message in msgFct and send it using SendMessage
