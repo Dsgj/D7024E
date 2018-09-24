@@ -34,6 +34,22 @@ func PeerToContact(p *pb.Peer) *Contact {
 	}
 }
 
+func ContactsToPeers(contacts []*Contact) []*pb.Peer {
+	peers := make([]*pb.Peer, 0)
+	for i, contact := range contacts {
+		peers[i] = ContactToPeer(contact)
+	}
+	return peers
+}
+
+func PeersToContacts(peers []*pb.Peer) []*Contact {
+	contacts := make([]*Contact, 0)
+	for i, peer := range peers {
+		contacts[i] = PeerToContact(peer)
+	}
+	return contacts
+}
+
 // CalcDistance calculates the distance to the target and
 // fills the contacts distance field
 func (contact *Contact) CalcDistance(target *KademliaID) {
