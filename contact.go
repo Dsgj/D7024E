@@ -19,10 +19,18 @@ func NewContact(id *KademliaID, address string) Contact {
 	return Contact{id, address, nil}
 }
 
-func ContactInfoToPeer(c *Contact) *pb.Peer {
+func ContactToPeer(c *Contact) *pb.Peer {
 	return &pb.Peer{
 		Id:   c.ID.String(),
 		Addr: c.Address,
+	}
+}
+
+func PeerToContact(p *pb.Peer) *Contact {
+	return &Contact{
+		ID:       NewKademliaID(p.GetId()),
+		Address:  p.GetAddr(),
+		distance: nil,
 	}
 }
 
