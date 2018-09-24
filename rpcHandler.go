@@ -24,3 +24,15 @@ func (k *Kademlia) handlePING(msg *pb.Message) (*pb.Message, error) {
 		msg.GetReceiver(), msg.GetSender(), true)
 	return respMsg, nil
 }
+
+func (k *Kademlia) handleFINDNODE(msg *pb.Message) (*pb.Message, error) {
+	//get nodes from bucket
+	// k = 20
+	target := NewKademliaID(msg.GetKey())
+	contacts := k.rt.FindClosestContacts(target, 20)
+	peers := ContactsToPeers(contacts)
+	respMsg := k.netw.msgFct.NewFindNodeMessage(msg.GetRequestID(), msg.GetKey(),
+		msg.GetReceiver(), msg.GetSender(), true)
+	respMsg.AddPeerData(peers)
+	return respMsg, nil
+}
