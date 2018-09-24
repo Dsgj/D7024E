@@ -13,7 +13,7 @@ message Message {
     int32 requestID = 2;
     MessageType type = 3;
     bool response = 4;
-    bytes key = 5;
+    string key = 5;
     Peer sender = 6;
     Peer receiver = 7;
     Data data = 8;

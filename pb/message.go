@@ -19,7 +19,7 @@ func (msgFct *MessageFactory) new() int32 {
 }
 
 func (msgFct *MessageFactory) NewMessage(t Message_MessageType, reqID int32,
-	key []byte, sender, receiver *Peer, isResponse bool) *Message {
+	key string, sender, receiver *Peer, isResponse bool) *Message {
 	time := time.Now().Unix()
 	msgID := msgFct.new()
 	msg := &Message{MessageID: msgID,
@@ -35,6 +35,6 @@ func (msgFct *MessageFactory) NewMessage(t Message_MessageType, reqID int32,
 }
 
 func (msgFct *MessageFactory) NewPingMessage(reqID int32,
-	key []byte, sender, receiver *Peer, isResponse bool) *Message {
+	key string, sender, receiver *Peer, isResponse bool) *Message {
 	return msgFct.NewMessage(Message_PING, reqID, key, sender, receiver, isResponse)
 }
