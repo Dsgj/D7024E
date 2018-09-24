@@ -13,14 +13,14 @@ type Network struct {
 	port        string
 	addr        string
 	msgHandlers map[int32]*MessageHandler
-	msgCounter  int32
+	msgFct      *pb.MessageFactory
 }
 
 func NewNetwork(port, addr string) *Network {
 	netw := &Network{port: port,
 		addr:        addr,
 		msgHandlers: make(map[int32]*MessageHandler),
-		msgCounter:  0}
+		msgFct:      pb.NewMessageFactory()}
 	return netw
 }
 
@@ -73,8 +73,15 @@ func Listen(k *Kademlia, ip string, port string) error {
 			returnCh <- msg
 			delete(network.msgHandlers, reqID)
 		} else {
-			//handler := k.getTypeHandler(msg.GetType())
-			//HANDLE IT
+			handler := k.getTypeHandler(msg.GetType())
+			respMsg, err := handler(msg)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("Sent response message %d sent at %s",
+				respMsg.GetMessageID(),
+				time.Unix(respMsg.GetSentTime(), 0))
+
 		}
 	}
 }
@@ -118,14 +125,10 @@ func (n *Network) SendMessage(c *Contact,
 	return nil, nil
 }
 
+// Dont use these. Instead, create a message in msgFct and send it using SendMessage
 func (n *Network) SendPingMessage(tar, me *Contact, reqID int32) (*MessageHandler, error) {
-	//create ping message
-	msg := pb.NewMessage(pb.Message_PING, reqID, nil,
-		ContactInfoToPeer(me), ContactInfoToPeer(tar))
-	msg.MessageID = n.msgCounter
-	n.msgCounter++
-	//call SendMessage
-	return n.SendMessage(tar, msg, true)
+	// TODO
+	return nil, nil
 }
 
 func (n *Network) SendFindContactMessage(c *Contact) (*MessageHandler, error) {
