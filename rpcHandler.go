@@ -10,6 +10,8 @@ func (k *Kademlia) getTypeHandler(t pb.Message_MessageType) rpcHandler {
 	switch t {
 	case pb.Message_PING:
 		return k.handlePING
+	case pb.Message_FIND_NODE:
+		return k.handleFINDNODE
 	default:
 		return nil
 	}
