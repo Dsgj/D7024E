@@ -105,6 +105,8 @@ func (n *Network) SendMessage(c *Contact,
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("Sent message %d type %s",
+		msg.GetMessageID(), msg.GetType())
 
 	if wantResponse {
 		msgHandler := &MessageHandler{
@@ -125,7 +127,7 @@ func (k *Kademlia) handleMessage(msg *pb.Message) {
 		log.Fatal(err)
 	}
 	receiver := PeerToContact(respMsg.GetReceiver())
-	_, err = k.netw.SendMessage(receiver, respMsg, false)
+	_, err = k.netw.SendMessage(&receiver, respMsg, false)
 }
 
 func (k *Kademlia) updateContacts(msg *pb.Message) {

@@ -26,8 +26,8 @@ func ContactToPeer(c Contact) *pb.Peer {
 	}
 }
 
-func PeerToContact(p *pb.Peer) *Contact {
-	return &Contact{
+func PeerToContact(p *pb.Peer) Contact {
+	return Contact{
 		ID:       NewKademliaID(p.GetId()),
 		Address:  p.GetAddr(),
 		distance: nil,
@@ -42,8 +42,8 @@ func ContactsToPeers(contacts []Contact) []*pb.Peer {
 	return peers
 }
 
-func PeersToContacts(peers []*pb.Peer) []*Contact {
-	contacts := make([]*Contact, 0)
+func PeersToContacts(peers []*pb.Peer) []Contact {
+	contacts := make([]Contact, 0)
 	for i, peer := range peers {
 		contacts[i] = PeerToContact(peer)
 	}

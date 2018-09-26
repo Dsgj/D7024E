@@ -58,7 +58,7 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
  * closest to the key
  * a more fitting name would be FIND_CLOSE_NODES
  */
-func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]*Contact, error) {
+func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error) {
 	reqID := k.newRequest()
 	receiver := ContactToPeer(recipient)
 	sender := ContactToPeer(k.rt.me)
@@ -77,7 +77,7 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]*Contact, error) 
 	return closestContacts, nil
 }
 
-func (k *Kademlia) Update(c *Contact) {
+func (k *Kademlia) Update(c Contact) {
 	bucketIndex := k.rt.getBucketIndex(c.ID)
 	bucket := k.rt.buckets[bucketIndex]
 	bucket.mutex.Lock()
