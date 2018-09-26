@@ -2,18 +2,21 @@ package d7024e
 
 import (
 	"container/list"
+	"sync"
 )
 
 // bucket definition
 // contains a List
 type bucket struct {
-	list *list.List
+	list  *list.List
+	mutex *sync.Mutex
 }
 
 // newBucket returns a new instance of a bucket
 func newBucket() *bucket {
 	bucket := &bucket{}
 	bucket.list = list.New()
+	bucket.mutex = &sync.Mutex{}
 	return bucket
 }
 
@@ -38,11 +41,13 @@ func (bucket *bucket) AddContact(contact Contact) {
 	}
 }
 
-// GetContactAndCalcDistance returns an array of Contacts where 
+// GetContactAndCalcDistance returns an array of Contacts where
 // the distance has already been calculated
 func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
 	var contacts []Contact
 
+	bucket.mutex.Lock()
+	defer bucket.mutex.Unlock()
 	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
 		contact := elt.Value.(Contact)
 		contact.CalcDistance(target)

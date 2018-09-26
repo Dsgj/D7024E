@@ -27,7 +27,10 @@ func (k *Kademlia) newRequest() int32 {
 	return current
 }
 
-func (k *Kademlia) PING(c Contact) (*pb.Message, error) {
+/*
+*	PING (Message, error, timeout(bool))
+ */
+func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
 	reqID := k.newRequest()
 	key := c.ID.String()
 	receiver := ContactToPeer(c)
@@ -41,11 +44,12 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error) {
 	msgHandler.awaitMessage(ch)
 
 	respMsg := <-ch
+	//handle timeouts
 	/*
 	*	Note updating of buckets needs to happen outside this function since
 	*	PING is used when updating buckets to check if nodes are alive
 	 */
-	return respMsg, nil
+	return respMsg, nil, false
 }
 
 /*
@@ -67,9 +71,35 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]*Contact, error) 
 	msgHandler.awaitMessage(ch)
 
 	respMsg := <-ch
+	//handle timeouts
 	closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
 
 	return closestContacts, nil
+}
+
+func (k *Kademlia) Update(c Contact) {
+	bucketIndex := k.rt.getBucketIndex(c.ID)
+	bucket := k.rt.buckets[bucketIndex]
+	bucket.mutex.Lock()
+	if bucket.Len() < 20 { // k = 20
+		bucket.AddContact(c)
+		bucket.mutex.Unlock()
+	} else { // bucket is full
+		//ping head of bucket
+		head := bucket.list.Front()
+		bucket.mutex.Unlock()
+		_, err, timeout := k.PING(head.Value.(Contact))
+		if err != nil {
+			log.Fatal(err)
+		}
+		if timeout {
+			bucket.mutex.Lock()
+			bucket.list.Remove(head)
+			bucket.list.PushBack(c)
+			bucket.mutex.Unlock()
+		}
+		//if it responds, do nothing
+	}
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {
