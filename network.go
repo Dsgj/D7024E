@@ -128,6 +128,9 @@ func (k *Kademlia) handleMessage(msg *pb.Message) {
 	}
 	receiver := PeerToContact(respMsg.GetReceiver())
 	_, err = k.netw.SendMessage(&receiver, respMsg, false)
+    if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (k *Kademlia) updateContacts(msg *pb.Message) {

@@ -41,7 +41,7 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
 		log.Fatal(err)
 	}
 	ch := make(chan *pb.Message)
-	msgHandler.awaitMessage(ch)
+	go msgHandler.awaitMessage(ch)
 
 	respMsg := <-ch
 	//handle timeouts
