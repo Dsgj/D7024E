@@ -75,6 +75,7 @@ func Listen(k *Kademlia, ip string, port string) error {
 		} else {
 			go k.handleMessage(msg)
 		}
+		go k.updateContacts(msg)
 	}
 }
 
@@ -125,6 +126,19 @@ func (k *Kademlia) handleMessage(msg *pb.Message) {
 	}
 	receiver := PeerToContact(respMsg.GetReceiver())
 	_, err = k.netw.SendMessage(receiver, respMsg, false)
+}
+
+func (k *Kademlia) updateContacts(msg *pb.Message) {
+	//Don't update on ping responses
+	//Maybe we want a flag instead that you set for when you dont want
+	// to update the routingtable after certain messages
+	//For now we can deal with ignoring updates on ping responses to avoid loops
+	if msg.GetType() == pb.Message_PING && msg.Response {
+		return
+	} else {
+		k.Update(PeerToContact(msg.GetSender()))
+	}
+
 }
 
 // Dont use these. Instead, create a message in msgFct and send it using SendMessage

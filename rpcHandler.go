@@ -31,6 +31,10 @@ func (k *Kademlia) handleFINDNODE(msg *pb.Message) (*pb.Message, error) {
 	//get nodes from bucket
 	// k = 20
 	target := NewKademliaID(msg.GetKey())
+	// Note: Need to make sure this doesnt include the requester
+	// 		(a node should never add itself to its routingtable)
+	//		the requester should also discard the contact in case it happens
+	//		anyway
 	contacts := k.rt.FindClosestContacts(target, 20)
 	peers := ContactsToPeers(contacts)
 	respMsg := k.netw.msgFct.NewFindNodeMessage(msg.GetRequestID(), msg.GetKey(),

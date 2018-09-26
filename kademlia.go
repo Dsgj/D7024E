@@ -77,7 +77,7 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]*Contact, error) 
 	return closestContacts, nil
 }
 
-func (k *Kademlia) Update(c Contact) {
+func (k *Kademlia) Update(c *Contact) {
 	bucketIndex := k.rt.getBucketIndex(c.ID)
 	bucket := k.rt.buckets[bucketIndex]
 	bucket.mutex.Lock()
