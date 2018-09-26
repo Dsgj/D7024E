@@ -4,6 +4,7 @@ import (
 	d "D7024E"
 	"log"
 	"net"
+	"os"
 )
 
 const (
@@ -12,15 +13,28 @@ const (
 )
 
 func main() {
+	ipArg := os.Args[3]
 	id := d.NewRandomKademliaID()
-	me := d.NewContact(id, ip)
+	me := d.NewContact(id, ipArg)
 	k := d.NewKademlia(me, port)
 
 	//myip := GetOutboundIP()
 	//log.Printf("IP Address: %d", myip)
-	ListIPs()
+	//ListIPs()
 
-	d.Listen(k, ip, port)
+	go d.Listen(k, ip, port)
+	bootstrapID := d.NewKademliaID(os.Args[1])
+	bootstrapAddr := os.Args[2]
+
+	bs := d.NewContact(bootstrapID, bootstrapAddr)
+	_, err, timeout := k.PING(bs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if timeout {
+		log.Printf("Ping timed out")
+	}
+	select {} // block forever
 }
 
 // gets preferred outbound IP
