@@ -13,7 +13,7 @@ WORKDIR /home/go/src/D7024E
 
 #Run the composed file
 #OBS!! This is done when the container is running!!
-CMD /usr/local/go/bin/go run client.go
+CMD /usr/local/go/bin/go run ./app/main.go
 
 # Make port 80 available to the world outside this container
 #EXPOSE 80
@@ -27,4 +27,3 @@ CMD /usr/local/go/bin/go run client.go
 #
 # docker stack deploy -c docker-compose-lab.yml
 #
-
