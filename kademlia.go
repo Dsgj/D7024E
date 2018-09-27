@@ -38,7 +38,7 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
 	msg := k.netw.msgFct.NewPingMessage(reqID, key, sender, receiver, false)
 	msgHandler, err := k.netw.SendMessage(&c, msg, true)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err, false
 	}
 	ch := make(chan *pb.Message)
 	go msgHandler.awaitMessage(ch)

@@ -13,9 +13,9 @@ const (
 )
 
 func main() {
-    // take ip from args for now
-    // TODO: automatically detect ip for kademlia netw interface
-    //       (or some kind of script solution to set up nodes)
+	// take ip from args for now
+	// TODO: automatically detect ip for kademlia netw interface
+	//       (or some kind of script solution to set up nodes)
 	ipArg := os.Args[3]
 	id := d.NewRandomKademliaID()
 	me := d.NewContact(id, ipArg)
@@ -23,9 +23,10 @@ func main() {
 
 	//myip := GetOutboundIP()
 	//log.Printf("IP Address: %d", myip)
-	//ListIPs()
+	ListIPs()
 
-    //TODO: listen does not use these params for now, clean up
+	//TODO: listen does not use these params for now, clean up
+	k.InitConn()
 	go d.Listen(k, ip, port)
 	bootstrapID := d.NewKademliaID(os.Args[1])
 	bootstrapAddr := os.Args[2]

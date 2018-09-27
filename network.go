@@ -2,6 +2,7 @@ package d7024e
 
 import (
 	pb "D7024E/pb"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -14,6 +15,7 @@ type Network struct {
 	addr        string
 	msgHandlers map[int32]*MessageHandler
 	msgFct      *pb.MessageFactory
+	conn        *net.UDPConn
 }
 
 func NewNetwork(port, addr string) *Network {
@@ -41,26 +43,37 @@ func (mh *MessageHandler) awaitMessage(returnChan chan (*pb.Message)) {
 	}
 }
 
-func Listen(k *Kademlia, ip string, port string) error {
-	network := k.netw
-	serverAddr, err := net.ResolveUDPAddr("udp", ":"+network.port)
+func (k *Kademlia) InitConn() {
+	n := k.netw
+	serverAddr, err := net.ResolveUDPAddr("udp", ":"+n.port)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	serverConn, err := net.ListenUDP("udp", serverAddr)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	defer serverConn.Close()
+	n.conn = serverConn
+}
+
+func Listen(k *Kademlia, ip string, port string) error {
+	network := k.netw
+	defer network.conn.Close()
 
 	buf := make([]byte, 1024)
 
 	log.Println("Listening on port " + network.port)
 	for {
-		n, addr, err := serverConn.ReadFromUDP(buf)
+		n, addr, err := network.conn.ReadFromUDP(buf)
+		if err != nil {
+			log.Fatal(err)
+		}
 		msg := &pb.Message{}
 		err = proto.Unmarshal(buf[0:n], msg)
+		if err != nil {
+			log.Fatal(err)
+		}
 		log.Printf("Received %d sent at %s from %s",
 			msg.GetMessageID(),
 			time.Unix(msg.GetSentTime(), 0), addr)
@@ -82,26 +95,15 @@ func Listen(k *Kademlia, ip string, port string) error {
 func (n *Network) SendMessage(c *Contact,
 	msg *pb.Message,
 	wantResponse bool) (*MessageHandler, error) {
-	// Should probably create and manage connections in a better way
 	remoteAddr, err := net.ResolveUDPAddr("udp", c.Address+":"+n.port)
 	if err != nil {
 		return nil, err
 	}
-	localAddr, err := net.ResolveUDPAddr("udp", n.addr+":"+n.port)
-	if err != nil {
-		return nil, err
-	}
-	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
 	}
-	_, err = conn.Write(data)
+	_, err = n.conn.WriteToUDP(data, remoteAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +130,7 @@ func (k *Kademlia) handleMessage(msg *pb.Message) {
 	}
 	receiver := PeerToContact(respMsg.GetReceiver())
 	_, err = k.netw.SendMessage(&receiver, respMsg, false)
-    if err != nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 }
