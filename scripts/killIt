@@ -14,4 +14,8 @@ echo Leaving the swarm...
 
 sudo docker swarm leave --force
 
+echo Killing old containers...
+
+sudo docker rm $(sudo docker ps -a -q)
+
 echo The swarm and all the containers is now dead!
