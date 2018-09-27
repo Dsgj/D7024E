@@ -36,16 +36,16 @@ func PeerToContact(p *pb.Peer) Contact {
 
 func ContactsToPeers(contacts []Contact) []*pb.Peer {
 	peers := make([]*pb.Peer, 0)
-	for i, contact := range contacts {
-		peers[i] = ContactToPeer(contact)
+	for _, contact := range contacts {
+		peers = append(peers, ContactToPeer(contact))
 	}
 	return peers
 }
 
 func PeersToContacts(peers []*pb.Peer) []Contact {
 	contacts := make([]Contact, 0)
-	for i, peer := range peers {
-		contacts[i] = PeerToContact(peer)
+	for _, peer := range peers {
+		contacts = append(contacts, PeerToContact(peer))
 	}
 	return contacts
 }
