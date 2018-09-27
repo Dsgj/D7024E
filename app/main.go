@@ -1,7 +1,7 @@
 package main
 
 import (
-	d "D7024E"
+	d "D7024E/dht"
 	"fmt"
 	"log"
 	"net"

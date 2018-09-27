@@ -1,7 +1,7 @@
-package d7024e
+package dht
 
 import (
-	pb "D7024E/pb"
+	pb "D7024E/dht/pb"
 )
 
 type rpcHandler func(*pb.Message) (*pb.Message, error)
