@@ -40,16 +40,20 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
 	if err != nil {
 		return nil, err, false
 	}
-	ch := make(chan *pb.Message)
-	go msgHandler.awaitMessage(ch)
+	respCh := make(chan *pb.Message)
+	timeoutCh := make(chan int32)
+	go msgHandler.awaitMessage(respCh, timeoutCh)
 
-	respMsg := <-ch
-	//handle timeouts
+	select {
+	case respMsg := <-respCh:
+		return respMsg, nil, false
+	case <-timeoutCh:
+		return nil, nil, true
+	}
 	/*
 	*	Note updating of buckets needs to happen outside this function since
 	*	PING is used when updating buckets to check if nodes are alive
 	 */
-	return respMsg, nil, false
 }
 
 /*
@@ -67,14 +71,17 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error, b
 	if err != nil {
 		log.Fatal(err)
 	}
-	ch := make(chan *pb.Message)
-	msgHandler.awaitMessage(ch)
+	respCh := make(chan *pb.Message)
+	timeoutCh := make(chan int32)
+	go msgHandler.awaitMessage(respCh, timeoutCh)
 
-	respMsg := <-ch
-	//handle timeouts
-	closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
-
-	return closestContacts, nil, false
+	select {
+	case respMsg := <-respCh:
+		closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
+		return closestContacts, nil, false
+	case <-timeoutCh:
+		return nil, nil, true
+	}
 }
 
 func (k *Kademlia) Update(c Contact) {

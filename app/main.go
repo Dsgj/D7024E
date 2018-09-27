@@ -42,7 +42,8 @@ func bootstrap(k *d.Kademlia, me d.Contact) {
 		log.Fatal(err)
 	}
 	if timeout {
-		log.Printf("Request timed out")
+		log.Printf("Request timed out\nRestarting bootstrap")
+		bootstrap(k, me)
 	}
 	fmt.Printf("%+v\n", closestContacts)
 	for _, contact := range closestContacts {

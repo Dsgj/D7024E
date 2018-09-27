@@ -30,14 +30,15 @@ type MessageHandler struct {
 	ch chan (*pb.Message)
 }
 
-func (mh *MessageHandler) awaitMessage(returnChan chan (*pb.Message)) {
+func (mh *MessageHandler) awaitMessage(returnChan chan (*pb.Message), timeoutChan chan int32) {
 	defer close(mh.ch)
 	select {
 	case result := <-mh.ch:
 		returnChan <- result
 		return
 	case <-time.After(30 * time.Second):
-		//handle timed out message
+		//TODO: cleanup timed-out messagehandlers
+		timeoutChan <- mh.id
 		return
 	}
 }
@@ -84,6 +85,7 @@ func Listen(k *Kademlia, ip string, port string) error {
 			returnCh := network.msgHandlers[reqID].ch
 			returnCh <- msg
 			delete(network.msgHandlers, reqID)
+			//TODO: cleanup timed-out messagehandlers
 		} else {
 			go k.handleMessage(msg)
 		}
