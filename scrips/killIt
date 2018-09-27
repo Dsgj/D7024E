@@ -1,0 +1,17 @@
+#!bin/bash
+#
+#Run "bash killIt" to start the script
+#
+#This will remove the stack and kill all the continers,
+#and after ther leave the swarm with the swarm leader thus killing the swarm.
+
+
+echo Removing the stack and network...
+
+sudo docker stack rm myswarm
+
+echo Leaving the swarm...
+
+sudo docker swarm leave --force
+
+echo The swarm and all the containers is now dead!

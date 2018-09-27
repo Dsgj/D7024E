@@ -1,0 +1,15 @@
+#!bin/bash
+
+echo Building the image...
+
+sudo docker build -t testimage:latest .
+
+echo Initiating a swarm...
+
+sudo docker swarm init
+
+echo Deploying the stack from the compose file..
+
+sudo docker stack deploy -c docker-compose-lab.yml myswarm
+
+echo The nodes are now running!
