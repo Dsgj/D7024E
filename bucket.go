@@ -2,6 +2,7 @@ package d7024e
 
 import (
 	"container/list"
+	"fmt"
 	"sync"
 )
 
@@ -23,6 +24,7 @@ func newBucket() *bucket {
 // AddContact adds the Contact to the front of the bucket
 // or moves it to the front of the bucket if it already existed
 func (bucket *bucket) AddContact(contact Contact) {
+	fmt.Printf("adding contact to bucket\n: %+v\n", contact)
 	var element *list.Element
 	for e := bucket.list.Front(); e != nil; e = e.Next() {
 		nodeID := e.Value.(Contact).ID

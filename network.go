@@ -2,7 +2,6 @@ package d7024e
 
 import (
 	pb "D7024E/pb"
-	"fmt"
 	"log"
 	"net"
 	"time"

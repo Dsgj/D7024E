@@ -58,7 +58,7 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
  * closest to the key
  * a more fitting name would be FIND_CLOSE_NODES
  */
-func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error) {
+func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error, bool) {
 	reqID := k.newRequest()
 	receiver := ContactToPeer(recipient)
 	sender := ContactToPeer(k.rt.me)
@@ -74,7 +74,7 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error) {
 	//handle timeouts
 	closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
 
-	return closestContacts, nil
+	return closestContacts, nil, false
 }
 
 func (k *Kademlia) Update(c Contact) {

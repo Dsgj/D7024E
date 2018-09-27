@@ -2,44 +2,62 @@ package main
 
 import (
 	d "D7024E"
+	"fmt"
 	"log"
 	"net"
 	"os"
 )
 
 const (
-	ip   = "127.0.0.1"
-	port = "8080"
+	port          = "8080"
+	bootstrapID   = "210fc7bb818639ac48a4c6afa2f1581a8b9525e3"
+	bootstrapAddr = "10.0.0.4"
 )
 
 func main() {
 	// take ip from args for now
-	// TODO: automatically detect ip for kademlia netw interface
-	//       (or some kind of script solution to set up nodes)
-	ipArg := os.Args[3]
-	id := d.NewRandomKademliaID()
-	me := d.NewContact(id, ipArg)
+	ip := os.Args[1]
+	me := getSelf(ip)
 	k := d.NewKademlia(me, port)
 
 	//myip := GetOutboundIP()
 	//log.Printf("IP Address: %d", myip)
-	ListIPs()
+	//ListIPs()
 
-	//TODO: listen does not use these params for now, clean up
+	// init listener/conn
 	k.InitConn()
+	//TODO: listen does not use these params for now, clean up
 	go d.Listen(k, ip, port)
-	bootstrapID := d.NewKademliaID(os.Args[1])
-	bootstrapAddr := os.Args[2]
 
-	bs := d.NewContact(bootstrapID, bootstrapAddr)
-	_, err, timeout := k.PING(bs)
+	if ip != bootstrapAddr {
+		bootstrap(k, me)
+	}
+	select {} // block forever
+}
+
+func bootstrap(k *d.Kademlia, me d.Contact) {
+	bs := d.NewContact(d.NewKademliaID(bootstrapID), bootstrapAddr)
+	closestContacts, err, timeout := k.FIND_NODE(bs, me.ID.String())
 	if err != nil {
 		log.Fatal(err)
 	}
 	if timeout {
-		log.Printf("Ping timed out")
+		log.Printf("Request timed out")
 	}
-	select {} // block forever
+	fmt.Printf("%+v\n", closestContacts)
+	for _, contact := range closestContacts {
+		k.Update(contact)
+	}
+}
+
+func getSelf(ip string) d.Contact {
+	if ip == bootstrapAddr { // im the bootstrapnode (this is bad, but works)
+		fmt.Printf("I'm the bootstrap node\n")
+		return d.NewContact(d.NewKademliaID(bootstrapID), ip)
+	} else {
+		id := d.NewRandomKademliaID()
+		return d.NewContact(id, ip)
+	}
 }
 
 // gets preferred outbound IP
