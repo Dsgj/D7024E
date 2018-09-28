@@ -10,37 +10,21 @@ import (
 )
 
 type Network struct {
-	port        string
-	addr        string
-	msgHandlers map[int32]*MessageHandler
-	msgFct      *pb.MessageFactory
-	conn        *net.UDPConn
+	port             string
+	addr             string
+	requestMap       map[int32](chan *pb.Message)
+	timedoutRequests chan int32
+	msgFct           *pb.MessageFactory
+	conn             *net.UDPConn
 }
 
 func NewNetwork(port, addr string) *Network {
 	netw := &Network{port: port,
-		addr:        addr,
-		msgHandlers: make(map[int32]*MessageHandler),
-		msgFct:      pb.NewMessageFactory()}
+		addr:             addr,
+		requestMap:       make(map[int32](chan *pb.Message)),
+		msgFct:           pb.NewMessageFactory(),
+		timedoutRequests: make(chan int32)}
 	return netw
-}
-
-type MessageHandler struct {
-	id int32
-	ch chan (*pb.Message)
-}
-
-func (mh *MessageHandler) awaitMessage(returnChan chan (*pb.Message), timeoutChan chan int32) {
-	defer close(mh.ch)
-	select {
-	case result := <-mh.ch:
-		returnChan <- result
-		return
-	case <-time.After(30 * time.Second):
-		//TODO: cleanup timed-out messagehandlers
-		timeoutChan <- mh.id
-		return
-	}
 }
 
 func (k *Kademlia) InitConn() {
@@ -82,9 +66,10 @@ func Listen(k *Kademlia, ip string, port string) error {
 		}
 		if msg.Response {
 			reqID := msg.GetRequestID()
-			returnCh := network.msgHandlers[reqID].ch
+			returnCh := network.requestMap[reqID]
 			returnCh <- msg
-			delete(network.msgHandlers, reqID)
+			close(returnCh)
+			delete(network.requestMap, reqID)
 			//TODO: cleanup timed-out messagehandlers
 		} else {
 			go k.handleMessage(msg)
@@ -93,34 +78,35 @@ func Listen(k *Kademlia, ip string, port string) error {
 	}
 }
 
+func (n *Network) SendRequest(c *Contact, msg *pb.Message,
+	returnCh chan *pb.Message) (chan int32, error) {
+	n.requestMap[msg.GetRequestID()] = returnCh
+	err := n.SendMessage(c, msg)
+	if err != nil {
+		delete(n.requestMap, msg.GetRequestID())
+		return nil, err
+	}
+	return n.timedoutRequests, nil
+}
+
 func (n *Network) SendMessage(c *Contact,
-	msg *pb.Message,
-	wantResponse bool) (*MessageHandler, error) {
+	msg *pb.Message) error {
 	remoteAddr, err := net.ResolveUDPAddr("udp", c.Address+":"+n.port)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	data, err := proto.Marshal(msg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	_, err = n.conn.WriteToUDP(data, remoteAddr)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	log.Printf("Sent message %d type %s",
 		msg.GetMessageID(), msg.GetType())
 
-	if wantResponse {
-		msgHandler := &MessageHandler{
-			id: msg.GetRequestID(),
-			ch: make(chan (*pb.Message)),
-		}
-		n.msgHandlers[msgHandler.id] = msgHandler
-		return msgHandler, nil
-	}
-
-	return nil, nil
+	return nil
 }
 
 func (k *Kademlia) handleMessage(msg *pb.Message) {
@@ -130,7 +116,7 @@ func (k *Kademlia) handleMessage(msg *pb.Message) {
 		log.Fatal(err)
 	}
 	receiver := PeerToContact(respMsg.GetReceiver())
-	_, err = k.netw.SendMessage(&receiver, respMsg, false)
+	err = k.netw.SendMessage(&receiver, respMsg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -150,22 +136,22 @@ func (k *Kademlia) updateContacts(msg *pb.Message) {
 }
 
 // Dont use these. Instead, create a message in msgFct and send it using SendMessage
-func (n *Network) SendPingMessage(tar, me *Contact, reqID int32) (*MessageHandler, error) {
+func (n *Network) SendPingMessage(tar, me *Contact, reqID int32) error {
 	// TODO
-	return nil, nil
+	return nil
 }
 
-func (n *Network) SendFindContactMessage(c *Contact) (*MessageHandler, error) {
+func (n *Network) SendFindContactMessage(c *Contact) error {
 	// TODO
-	return nil, nil
+	return nil
 }
 
-func (n *Network) SendFindDataMessage(hash string) (*MessageHandler, error) {
+func (n *Network) SendFindDataMessage(hash string) error {
 	// TODO
-	return nil, nil
+	return nil
 }
 
-func (n *Network) SendStoreMessage(data []byte) (*MessageHandler, error) {
+func (n *Network) SendStoreMessage(data []byte) error {
 	// TODO
-	return nil, nil
+	return nil
 }

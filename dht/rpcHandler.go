@@ -35,7 +35,7 @@ func (k *Kademlia) handleFINDNODE(msg *pb.Message) (*pb.Message, error) {
 	// 		(a node should never add itself to its routingtable)
 	//		the requester should also discard the contact in case it happens
 	//		anyway
-	contacts := k.rt.FindClosestContacts(target, 20)
+	contacts := k.rt.FindClosestContacts(target, 20, PeerToContact(msg.GetSender()))
 	peers := ContactsToPeers(contacts)
 	respMsg := k.netw.msgFct.NewFindNodeMessage(msg.GetRequestID(), msg.GetKey(),
 		msg.GetReceiver(), msg.GetSender(), true)

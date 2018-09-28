@@ -45,7 +45,7 @@ func bootstrap(k *d.Kademlia, me d.Contact) {
 		log.Printf("Request timed out\nRestarting bootstrap")
 		bootstrap(k, me)
 	}
-	fmt.Printf("%+v\n", closestContacts)
+	fmt.Printf("received contacts: %+v\n", closestContacts)
 	for _, contact := range closestContacts {
 		k.Update(contact)
 	}

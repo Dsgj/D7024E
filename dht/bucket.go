@@ -45,15 +45,17 @@ func (bucket *bucket) AddContact(contact Contact) {
 
 // GetContactAndCalcDistance returns an array of Contacts where
 // the distance has already been calculated
-func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
+func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID, ignore Contact) []Contact {
 	var contacts []Contact
 
 	bucket.mutex.Lock()
 	defer bucket.mutex.Unlock()
 	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
 		contact := elt.Value.(Contact)
-		contact.CalcDistance(target)
-		contacts = append(contacts, contact)
+		if contact.ID.String() != ignore.ID.String() {
+			contact.CalcDistance(target)
+			contacts = append(contacts, contact)
+		}
 	}
 
 	return contacts

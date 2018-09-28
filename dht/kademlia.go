@@ -3,6 +3,7 @@ package dht
 import (
 	pb "D7024E/dht/pb"
 	"log"
+	"time"
 )
 
 type Kademlia struct {
@@ -36,18 +37,16 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
 	receiver := ContactToPeer(c)
 	sender := ContactToPeer(k.rt.me)
 	msg := k.netw.msgFct.NewPingMessage(reqID, key, sender, receiver, false)
-	msgHandler, err := k.netw.SendMessage(&c, msg, true)
+	respCh := make(chan *pb.Message)
+	timeoutCh, err := k.netw.SendRequest(&c, msg, respCh)
 	if err != nil {
 		return nil, err, false
 	}
-	respCh := make(chan *pb.Message)
-	timeoutCh := make(chan int32)
-	go msgHandler.awaitMessage(respCh, timeoutCh)
-
 	select {
 	case respMsg := <-respCh:
 		return respMsg, nil, false
-	case <-timeoutCh:
+	case <-time.After(30 * time.Second):
+		timeoutCh <- reqID
 		return nil, nil, true
 	}
 	/*
@@ -67,24 +66,27 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error, b
 	receiver := ContactToPeer(recipient)
 	sender := ContactToPeer(k.rt.me)
 	msg := k.netw.msgFct.NewFindNodeMessage(reqID, key, sender, receiver, false)
-	msgHandler, err := k.netw.SendMessage(&recipient, msg, true)
-	if err != nil {
-		log.Fatal(err)
-	}
 	respCh := make(chan *pb.Message)
-	timeoutCh := make(chan int32)
-	go msgHandler.awaitMessage(respCh, timeoutCh)
+	timeoutCh, err := k.netw.SendRequest(&recipient, msg, respCh)
+	if err != nil {
+		return nil, err, false
+	}
 
 	select {
 	case respMsg := <-respCh:
 		closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
 		return closestContacts, nil, false
-	case <-timeoutCh:
+	case <-time.After(30 * time.Second):
+		timeoutCh <- reqID
 		return nil, nil, true
 	}
 }
 
 func (k *Kademlia) Update(c Contact) {
+	if c.ID.String() == k.rt.me.ID.String() { //dont add yourself
+		log.Printf("Attemped to add self to bucket")
+		return
+	}
 	bucketIndex := k.rt.getBucketIndex(c.ID)
 	bucket := k.rt.buckets[bucketIndex]
 	bucket.mutex.Lock()
