@@ -1,18 +1,22 @@
 package pb
 
 import (
+	"sync"
 	"time"
 )
 
 type MessageFactory struct {
 	count int32
+	mutex *sync.Mutex
 }
 
 func NewMessageFactory() *MessageFactory {
-	return &MessageFactory{count: 0}
+	return &MessageFactory{count: 0, mutex: &sync.Mutex{}}
 }
 
 func (msgFct *MessageFactory) new() int32 {
+	msgFct.mutex.Lock()
+	defer msgFct.mutex.Unlock()
 	current := msgFct.count
 	msgFct.count++
 	return current
