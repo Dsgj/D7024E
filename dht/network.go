@@ -49,33 +49,45 @@ func Listen(k *Kademlia, ip string, port string) error {
 
 	log.Println("Listening on port " + network.port)
 	for {
-		n, addr, err := network.conn.ReadFromUDP(buf)
-		if err != nil {
-			log.Fatal(err)
-		}
-		msg := &pb.Message{}
-		err = proto.Unmarshal(buf[0:n], msg)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Received %d sent at %s from %s",
-			msg.GetMessageID(),
-			time.Unix(msg.GetSentTime(), 0), addr)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if msg.Response {
-			reqID := msg.GetRequestID()
+		select {
+		case reqID := <-k.netw.timedoutRequests:
 			returnCh := network.requestMap[reqID]
-			returnCh <- msg
 			close(returnCh)
 			delete(network.requestMap, reqID)
-			//TODO: cleanup timed-out messagehandlers
-		} else {
-			go k.handleMessage(msg)
+		default:
+			k.read(buf)
 		}
-		go k.updateContacts(msg)
 	}
+}
+
+func (k *Kademlia) read(buf []byte) {
+	network := k.netw
+	n, addr, err := network.conn.ReadFromUDP(buf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	msg := &pb.Message{}
+	err = proto.Unmarshal(buf[0:n], msg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Received %d sent at %s from %s",
+		msg.GetMessageID(),
+		time.Unix(msg.GetSentTime(), 0), addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if msg.Response {
+		reqID := msg.GetRequestID()
+		returnCh := network.requestMap[reqID]
+		returnCh <- msg
+		close(returnCh)
+		delete(network.requestMap, reqID)
+		//TODO: cleanup timed-out messagehandlers
+	} else {
+		go k.handleMessage(msg)
+	}
+	go k.updateContacts(msg)
 }
 
 func (n *Network) SendRequest(c *Contact, msg *pb.Message,
