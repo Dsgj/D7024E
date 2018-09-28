@@ -12,6 +12,7 @@ services:
 #              memory: 50M
       restart_policy:
         condition: on-failure
+        max_attempts: 2
 #    ports:
 #      - "4000:80"
     networks:
