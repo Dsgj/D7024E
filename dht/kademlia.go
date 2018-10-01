@@ -99,6 +99,34 @@ func (k *Kademlia) STORE(c Contact, rec *Record) error {
 	return nil
 }
 
+func (k *Kademlia) FINDVALUE(recipient Contact,
+	key string) ([]byte, []Contact, error, bool) {
+	reqID := k.newRequest()
+	receiver := ContactToPeer(recipient)
+	sender := ContactToPeer(k.rt.me)
+	msg := k.netw.msgFct.NewFindNodeMessage(reqID, key, sender, receiver, false)
+	respCh := make(chan *pb.Message)
+	timeoutCh, err := k.netw.SendRequest(&recipient, msg, respCh)
+	if err != nil {
+		return nil, nil, err, false
+	}
+
+	select {
+	case respMsg := <-respCh:
+		rec := respMsg.GetData().GetRecord()
+		if rec != nil {
+			//we got a record
+			return rec.GetValue(), nil, nil, false
+		}
+		// no record, take closest contacts
+		closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
+		return nil, closestContacts, nil, false
+	case <-time.After(30 * time.Second):
+		timeoutCh <- reqID
+		return nil, nil, nil, true
+	}
+}
+
 func (k *Kademlia) Update(c Contact) {
 	if c.ID.String() == k.rt.me.ID.String() { //dont add yourself
 		log.Printf("Attemped to add self to bucket")

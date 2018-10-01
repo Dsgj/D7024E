@@ -55,3 +55,23 @@ func (k *Kademlia) handleSTORE(msg *pb.Message) (*pb.Message, error) {
 	}
 	return nil, nil
 }
+
+func (k *Kademlia) handleFINDVALUE(msg *pb.Message) (*pb.Message, error) {
+	key := FromString(msg.GetKey())
+	respMsg := k.netw.msgFct.NewFindValueMessage(msg.GetRequestID(), msg.GetKey(),
+		msg.GetReceiver(), msg.GetSender(), true)
+
+	_, exists := k.dataStore.GetRecord(key)
+	if exists {
+		respMsg.AddRecord(k.dataStore.SendableRecord(key))
+	} else {
+		target := NewKademliaID(msg.GetKey())
+		contacts := k.rt.FindClosestContacts(target, 20, PeerToContact(msg.GetSender()))
+		peers := ContactsToPeers(contacts)
+		respMsg := k.netw.msgFct.NewFindNodeMessage(msg.GetRequestID(), msg.GetKey(),
+			msg.GetReceiver(), msg.GetSender(), true)
+		respMsg.AddPeerData(peers)
+	}
+
+	return respMsg, nil
+}

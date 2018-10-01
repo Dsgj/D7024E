@@ -115,6 +115,13 @@ func ToString(data [20]byte) string {
 	return hex.EncodeToString(data[:])
 }
 
-func FromString(s string) ([]byte, error) {
-	return hex.DecodeString(s)
+func FromString(s string) [20]byte {
+	decoded, _ := hex.DecodeString(s)
+
+	newArray := [20]byte{}
+	for i := 0; i < 20; i++ {
+		newArray[i] = decoded[i]
+	}
+
+	return newArray
 }
