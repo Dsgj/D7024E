@@ -2,13 +2,13 @@
 FROM larjim/kademlialab:latest
 
 # Copy the current directory contents into the container at /home/go/src/D7024E
-COPY . /home/go/src/D7024E
+COPY . /root/go/src/D7024E
 
 #Copy protobuf into the container
-COPY /import/protobuf-master/proto /usr/local/go/src/vendor/github.com/golang/protobuf/proto
+COPY /import/protobuf-master/proto /root/go/src/vendor/github.com/golang/protobuf/proto
 
 #Sets the working directory to where to code is
-WORKDIR /home/go/src/D7024E
+WORKDIR /root/go/src/D7024E
 
 #Compiles the file "client.go" and names it "clientBin"
 #OBS!! This is done when the image it built!!
