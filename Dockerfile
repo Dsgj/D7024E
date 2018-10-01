@@ -1,11 +1,14 @@
 #Copy the image from Lara
 FROM larjim/kademlialab:latest
 
-# Copy the current directory contents into the container at /app
-COPY . /home/go/src/D7024E
+# Copy the current directory contents into the container at /home/go/src/D7024E
+COPY . /root/go/src/D7024E
+
+#Copy protobuf into the container
+COPY /import/protobuf-master/proto /root/go/src/vendor/github.com/golang/protobuf/proto
 
 #Sets the working directory to where to code is
-WORKDIR /home/go/src/D7024E
+WORKDIR /root/go/src/D7024E
 
 #Compiles the file "client.go" and names it "clientBin"
 #OBS!! This is done when the image it built!!
@@ -14,6 +17,9 @@ WORKDIR /home/go/src/D7024E
 #Run the composed file
 #OBS!! This is done when the container is running!!
 #CMD /usr/local/go/bin/go run ./app/main.go
+
+#Starts the app and passes the ip of the container as an argument
+CMD /usr/local/go/bin/go run ./app/main.go $(hostname -i)
 
 # Make port 80 available to the world outside this container
 #EXPOSE 80
