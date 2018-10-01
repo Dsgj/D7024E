@@ -92,6 +92,7 @@ func (k *Kademlia) STORE(c Contact, rec *Record) error {
 	sender := ContactToPeer(k.rt.me)
 	key := c.ID.String()
 	msg := k.netw.msgFct.NewStoreMessage(reqID, key, sender, receiver, false)
+	msg.AddRecord(k.dataStore.SendableRecord(GetKey(rec.value)))
 	err := k.netw.SendMessage(&c, msg)
 	if err != nil {
 		return err

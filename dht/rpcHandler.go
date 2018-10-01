@@ -47,7 +47,7 @@ func (k *Kademlia) handleFINDNODE(msg *pb.Message) (*pb.Message, error) {
 
 func (k *Kademlia) handleSTORE(msg *pb.Message) (*pb.Message, error) {
 	data := msg.GetData().GetRecord().GetValue()
-	_, exists := k.dataStore.GetRecord(Hash(data))
+	_, exists := k.dataStore.GetRecord(GetKey(data))
 	if exists {
 		// what do
 	} else {

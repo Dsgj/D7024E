@@ -30,7 +30,7 @@ type Record struct {
 }
 
 func (s *Store) Store(data []byte) *Record {
-	sha := Hash(data)
+	sha := GetKey(data)
 	record := &Record{value: data,
 		expTime:  time.Now(),
 		replTime: time.Now(),
@@ -107,7 +107,7 @@ func (r *Record) NeedsReplicate(now time.Time) bool {
 	return now.Sub(r.replTime) >= ReplicationPeriod
 }
 
-func Hash(data []byte) [20]byte {
+func GetKey(data []byte) [20]byte {
 	return sha1.Sum(data)
 }
 
