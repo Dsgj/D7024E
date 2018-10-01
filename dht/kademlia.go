@@ -7,9 +7,10 @@ import (
 )
 
 type Kademlia struct {
-	rt       *RoutingTable
-	netw     *Network
-	reqCount int32
+	rt        *RoutingTable
+	netw      *Network
+	reqCount  int32
+	scheduler *Scheduler
 }
 
 func NewKademlia(me Contact, port string) *Kademlia {
@@ -17,8 +18,9 @@ func NewKademlia(me Contact, port string) *Kademlia {
 	// hardcoded port for now
 	netw := NewNetwork(port, me.Address)
 	k := &Kademlia{rt: rt,
-		netw:     netw,
-		reqCount: 0}
+		netw:      netw,
+		reqCount:  0,
+		scheduler: &Scheduler{}}
 	return k
 }
 
@@ -109,6 +111,17 @@ func (k *Kademlia) Update(c Contact) {
 		}
 		//if it responds, do nothing
 	}
+}
+
+func (k *Kademlia) StartScheduler() {
+	task := func() {
+		log.Printf("current contacts: %v", k.rt.FindClosestContacts(k.rt.me.ID, 20, k.rt.me))
+		// refresh buckets
+		// replicate each key/value every 1h
+		// republish key/value if original publisher every 24h
+		// expire key/value after 24h if not pinned
+	}
+	go k.scheduler.RepeatTask(10, task)
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {

@@ -32,6 +32,7 @@ func main() {
 	if ip != bootstrapAddr {
 		bootstrap(k, me)
 	}
+	k.StartScheduler()
 	select {} // block forever
 }
 

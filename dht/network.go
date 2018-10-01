@@ -23,7 +23,7 @@ func NewNetwork(port, addr string) *Network {
 		addr:             addr,
 		requestMap:       make(map[int32](chan *pb.Message)),
 		msgFct:           pb.NewMessageFactory(),
-		timedoutRequests: make(chan int32)}
+		timedoutRequests: make(chan int32, 100)}
 	return netw
 }
 
