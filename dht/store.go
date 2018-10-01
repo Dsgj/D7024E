@@ -1,6 +1,7 @@
 package dht
 
 import (
+	pb "D7024E/dht/pb"
 	"crypto/sha1"
 	"encoding/hex"
 	"log"
@@ -28,7 +29,7 @@ type Record struct {
 	pinned   bool
 }
 
-func (s *Store) Store(data []byte) {
+func (s *Store) Store(data []byte) *Record {
 	sha := Hash(data)
 	record := &Record{value: data,
 		expTime:  time.Now(),
@@ -37,17 +38,18 @@ func (s *Store) Store(data []byte) {
 	s.mutex.Lock()
 	s.records[sha] = record
 	s.mutex.Unlock()
+	return record
 }
 
-func (s *Store) GetRecord(key [20]byte) *Record {
+func (s *Store) GetRecord(key [20]byte) (*Record, bool) {
 	s.mutex.Lock()
 	record, exists := s.records[key]
 	s.mutex.Unlock()
 	if exists {
-		return record
+		return record, true
 	} else {
 		log.Printf("No record found for key: %s", ToString(key))
-		return nil
+		return nil, false
 	}
 
 }
@@ -87,6 +89,14 @@ func (s *Store) UnpinRecord(key [20]byte) {
 	} else {
 		log.Printf("No record found for key: %s", ToString(key))
 	}
+}
+
+func (s *Store) SendableRecord(key [20]byte) *pb.Record {
+	rec, exists := s.GetRecord(key)
+	if exists {
+		return &pb.Record{Key: key[:], Value: rec.value}
+	}
+	return nil
 }
 
 func (r *Record) IsExpired(now time.Time) bool {

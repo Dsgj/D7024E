@@ -11,6 +11,7 @@ type Kademlia struct {
 	netw      *Network
 	reqCount  int32
 	scheduler *Scheduler
+	dataStore *Store
 }
 
 func NewKademlia(me Contact, port string) *Kademlia {
@@ -20,7 +21,8 @@ func NewKademlia(me Contact, port string) *Kademlia {
 	k := &Kademlia{rt: rt,
 		netw:      netw,
 		reqCount:  0,
-		scheduler: &Scheduler{}}
+		scheduler: &Scheduler{},
+		dataStore: NewStore()}
 	return k
 }
 
@@ -82,6 +84,19 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error, b
 		timeoutCh <- reqID
 		return nil, nil, true
 	}
+}
+
+func (k *Kademlia) STORE(c Contact, rec *Record) error {
+	reqID := k.newRequest()
+	receiver := ContactToPeer(c)
+	sender := ContactToPeer(k.rt.me)
+	key := c.ID.String()
+	msg := k.netw.msgFct.NewStoreMessage(reqID, key, sender, receiver, false)
+	err := k.netw.SendMessage(&c, msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (k *Kademlia) Update(c Contact) {

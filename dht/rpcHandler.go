@@ -12,6 +12,8 @@ func (k *Kademlia) getTypeHandler(t pb.Message_MessageType) rpcHandler {
 		return k.handlePING
 	case pb.Message_FIND_NODE:
 		return k.handleFINDNODE
+	case pb.Message_STORE:
+		return k.handleSTORE
 	default:
 		return nil
 	}
@@ -41,4 +43,15 @@ func (k *Kademlia) handleFINDNODE(msg *pb.Message) (*pb.Message, error) {
 		msg.GetReceiver(), msg.GetSender(), true)
 	respMsg.AddPeerData(peers)
 	return respMsg, nil
+}
+
+func (k *Kademlia) handleSTORE(msg *pb.Message) (*pb.Message, error) {
+	data := msg.GetData().GetRecord().GetValue()
+	_, exists := k.dataStore.GetRecord(Hash(data))
+	if exists {
+		// what do
+	} else {
+		k.dataStore.Store(data)
+	}
+	return nil, nil
 }

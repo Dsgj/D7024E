@@ -48,7 +48,17 @@ func (msgFct *MessageFactory) NewFindNodeMessage(reqID int32, key string,
 	return msgFct.NewMessage(Message_FIND_NODE, reqID, key, sender, receiver, isResponse)
 }
 
+func (msgFct *MessageFactory) NewStoreMessage(reqID int32, key string,
+	sender, receiver *Peer, isResponse bool) *Message {
+	return msgFct.NewMessage(Message_STORE, reqID, key, sender, receiver, isResponse)
+}
+
 func (msg *Message) AddPeerData(peers []*Peer) *Message {
 	msg.Data = &Data{ClosestPeers: peers}
+	return msg
+}
+
+func (msg *Message) AddRecord(rec *Record) *Message {
+	msg.Data = &Data{Record: rec}
 	return msg
 }
