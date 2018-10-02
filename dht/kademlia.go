@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const requestTimeout = 5 * time.Second
+
 type Kademlia struct {
 	rt        *RoutingTable
 	netw      *Network
@@ -49,7 +51,7 @@ func (k *Kademlia) PING(c Contact) (*pb.Message, error, bool) {
 	select {
 	case respMsg := <-respCh:
 		return respMsg, nil, false
-	case <-time.After(30 * time.Second):
+	case <-time.After(requestTimeout):
 		timeoutCh <- reqID
 		return nil, nil, true
 	}
@@ -80,7 +82,7 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error, b
 	case respMsg := <-respCh:
 		closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
 		return closestContacts, nil, false
-	case <-time.After(30 * time.Second):
+	case <-time.After(requestTimeout):
 		timeoutCh <- reqID
 		return nil, nil, true
 	}
@@ -122,7 +124,7 @@ func (k *Kademlia) FINDVALUE(recipient Contact,
 		// no record, take closest contacts
 		closestContacts := PeersToContacts(respMsg.GetData().GetClosestPeers())
 		return nil, closestContacts, nil, false
-	case <-time.After(30 * time.Second):
+	case <-time.After(requestTimeout):
 		timeoutCh <- reqID
 		return nil, nil, nil, true
 	}
