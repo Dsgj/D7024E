@@ -59,7 +59,7 @@ func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID, ignore Conta
 	defer bucket.mutex.Unlock()
 	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
 		contact := elt.Value.(Contact)
-		if contact.ID.String() != ignore.ID.String() {
+		if contact.Equals(&ignore) {
 			contact.CalcDistance(target)
 			contacts = append(contacts, contact)
 		}

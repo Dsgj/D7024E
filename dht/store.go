@@ -130,8 +130,7 @@ func (r *Record) NeedsReplicate(now time.Time) bool {
 }
 
 func (r *Record) NeedsRepublish(now time.Time, me Contact) bool {
-	return now.Sub(r.publishedAt) >= tRepublish &&
-		me.ID.String() == r.publisher.ID.String()
+	return now.Sub(r.publishedAt) >= tRepublish && me.Equals(&r.publisher)
 }
 
 func GetKey(data []byte) [20]byte {

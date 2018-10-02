@@ -131,7 +131,7 @@ func (k *Kademlia) FINDVALUE(recipient Contact,
 }
 
 func (k *Kademlia) Update(c Contact) {
-	if c.ID.String() == k.rt.me.ID.String() { //dont add yourself
+	if c.Equals(&k.rt.me) { //dont add yourself
 		log.Printf("Attemped to add self to bucket")
 		return
 	}

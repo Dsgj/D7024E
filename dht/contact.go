@@ -66,6 +66,10 @@ func (contact *Contact) String() string {
 	return fmt.Sprintf(`contact("%s", "%s")`, contact.ID, contact.Address)
 }
 
+func (contact *Contact) Equals(otherContact *Contact) bool {
+	return contact.ID.String() == otherContact.ID.String()
+}
+
 // ContactCandidates definition
 // stores an array of Contacts
 type ContactCandidates struct {
