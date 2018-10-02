@@ -90,6 +90,10 @@ func (candidates *ContactCandidates) Append(contacts []Contact) {
 	candidates.contacts = append(candidates.contacts, contacts...)
 }
 
+func (candidates *ContactCandidates) Add(contact Contact) {
+	candidates.contacts = append(candidates.contacts, contact)
+}
+
 // GetContacts returns the first count number of Contacts
 func (candidates *ContactCandidates) GetContacts(count int) []Contact {
 	return candidates.contacts[:count]
@@ -97,7 +101,9 @@ func (candidates *ContactCandidates) GetContacts(count int) []Contact {
 
 // Sort the Contacts in ContactCandidates
 func (candidates *ContactCandidates) Sort() {
-	sort.Sort(candidates)
+	if candidates.Len() > 1 {
+		sort.Sort(candidates)
+	}
 }
 
 // Len returns the length of the ContactCandidates
@@ -115,4 +121,31 @@ func (candidates *ContactCandidates) Swap(i, j int) {
 // the Contact at index j
 func (candidates *ContactCandidates) Less(i, j int) bool {
 	return candidates.contacts[i].Less(&candidates.contacts[j])
+}
+
+func (candidates *ContactCandidates) Remove(i int) {
+	candidates.contacts = append(candidates.contacts[:i], candidates.contacts[i+1:]...)
+}
+
+func (candidates *ContactCandidates) Cut() {
+	if candidates.Len() > 20 {
+		candidates.contacts = candidates.contacts[:20]
+	}
+}
+
+func (candidates *ContactCandidates) Exists(c Contact) bool {
+	for _, contact := range candidates.contacts {
+		if contact.Equals(&c) {
+			return true
+		}
+	}
+	return false
+}
+
+func (candidates *ContactCandidates) AddUnique(contacts []Contact) {
+	for _, contact := range contacts {
+		if !candidates.Exists(contact) {
+			candidates.Add(contact)
+		}
+	}
 }
