@@ -20,17 +20,26 @@ func NewContact(id *KademliaID, address string) Contact {
 }
 
 func ContactToPeer(c Contact) *pb.Peer {
+	dist := ""
+	if c.distance != nil {
+		dist = c.distance.String()
+	}
 	return &pb.Peer{
-		Id:   c.ID.String(),
-		Addr: c.Address,
+		Id:       c.ID.String(),
+		Addr:     c.Address,
+		Distance: dist,
 	}
 }
 
 func PeerToContact(p *pb.Peer) Contact {
+	dist := &KademliaID{}
+	if p.GetDistance() != "" {
+		dist = NewKademliaID(p.GetDistance())
+	}
 	return Contact{
 		ID:       NewKademliaID(p.GetId()),
 		Address:  p.GetAddr(),
-		distance: nil,
+		distance: dist,
 	}
 }
 
