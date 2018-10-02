@@ -161,6 +161,18 @@ func (k *Kademlia) StartScheduler() {
 	task := func() {
 		log.Printf("current contacts: %v", k.rt.FindClosestContacts(k.rt.me.ID, 20, k.rt.me))
 		// refresh buckets
+
+		for key, record := range k.dataStore.records {
+			if record.IsExpired(time.Now()) {
+				k.dataStore.DelRecord(key)
+			} else if record.NeedsRepublish(time.Now(), k.rt.me) {
+				record.Republish(time.Now())
+				//go iterativeStore (publish true)
+			} else if record.NeedsReplicate(time.Now()) {
+				record.Replicate(time.Now())
+				//go iterativeStore (publish false)
+			}
+		}
 		// replicate each key/value every 1h
 		// republish key/value if original publisher every 24h
 		// expire key/value after 24h if not pinned

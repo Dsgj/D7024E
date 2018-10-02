@@ -112,10 +112,17 @@ func (r *Record) Republish(t time.Time) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.publishedAt = t
+	r.replAt = t
+}
+
+func (r *Record) Replicate(t time.Time) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.replAt = t
 }
 
 func (r *Record) IsExpired(now time.Time) bool {
-	return now.Sub(r.publishedAt) >= tExpire
+	return now.Sub(r.publishedAt) >= tExpire && r.pinned == false
 }
 
 func (r *Record) NeedsReplicate(now time.Time) bool {
