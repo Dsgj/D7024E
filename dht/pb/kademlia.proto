@@ -25,6 +25,7 @@ message Message {
 message Peer {
     string id = 1;
     string addr = 2;
+    string distance = 3;
 }
 
 message Record {
