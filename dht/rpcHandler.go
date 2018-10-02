@@ -69,7 +69,7 @@ func (k *Kademlia) handleFINDVALUE(msg *pb.Message) (*pb.Message, error) {
 
 	_, exists := k.dataStore.GetRecord(key)
 	if exists {
-		respMsg.AddRecord(k.dataStore.SendableRecord(key))
+		respMsg.AddRecord(k.dataStore.SendableRecord(key, false))
 	} else {
 		target := NewKademliaID(msg.GetKey())
 		contacts := k.rt.FindClosestContacts(target, 20, PeerToContact(msg.GetSender()))

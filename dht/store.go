@@ -96,10 +96,14 @@ func (s *Store) UnpinRecord(key [20]byte) {
 	}
 }
 
-func (s *Store) SendableRecord(key [20]byte) *pb.Record {
+func (s *Store) SendableRecord(key [20]byte, newPublish bool) *pb.Record {
 	rec, exists := s.GetRecord(key)
 	if exists {
-		return &pb.Record{Key: key[:], Value: rec.value}
+		return &pb.Record{Key: key[:],
+			Value:       rec.value,
+			NewPublish:  newPublish,
+			Publisher:   ContactToPeer(rec.publisher),
+			PublishedAt: rec.publishedAt.Unix()}
 	}
 	return nil
 }

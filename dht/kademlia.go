@@ -86,13 +86,13 @@ func (k *Kademlia) FIND_NODE(recipient Contact, key string) ([]Contact, error, b
 	}
 }
 
-func (k *Kademlia) STORE(c Contact, rec *Record) error {
+func (k *Kademlia) STORE(c Contact, rec *Record, publish bool) error {
 	reqID := k.newRequest()
 	receiver := ContactToPeer(c)
 	sender := ContactToPeer(k.rt.me)
 	key := c.ID.String()
 	msg := k.netw.msgFct.NewStoreMessage(reqID, key, sender, receiver, false)
-	msg.AddRecord(k.dataStore.SendableRecord(GetKey(rec.value)))
+	msg.AddRecord(k.dataStore.SendableRecord(GetKey(rec.value), publish))
 	err := k.netw.SendMessage(&c, msg)
 	if err != nil {
 		return err
