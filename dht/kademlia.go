@@ -7,6 +7,7 @@ import (
 )
 
 const requestTimeout = 5 * time.Second
+const alpha = 3
 
 type Kademlia struct {
 	rt        *RoutingTable
@@ -127,6 +128,101 @@ func (k *Kademlia) FINDVALUE(recipient Contact,
 	case <-time.After(requestTimeout):
 		timeoutCh <- reqID
 		return nil, nil, nil, true
+	}
+}
+
+func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
+	toBeQueried := k.rt.FindClosestContacts(NewKademliaID(key), 20, k.rt.me)
+	log.Printf("to be queried: %+v\n", toBeQueried)
+	alreadyQueried := make(map[*KademliaID]bool)
+	shortList := &ContactCandidates{}
+
+	for {
+		countNodesToQuery := 0
+		alreadyAdded := make(map[*KademliaID]bool)
+		for i := 0; i < alpha; i++ {
+			for _, contact := range toBeQueried {
+				if !alreadyQueried[contact.ID] && !alreadyAdded[contact.ID] {
+					shortList.Add(contact)
+					alreadyAdded[contact.ID] = true
+					countNodesToQuery++
+				}
+			}
+		}
+		log.Printf("shortlist built: %+v\n", shortList)
+		if countNodesToQuery == 0 { // we queried all nodes
+			log.Printf("queried all nodes")
+			return shortList.contacts, nil
+		} else {
+			log.Printf("tiem to query some shit")
+			shortList, alreadyQueried = k.findCloserNodes(shortList, key, alreadyQueried)
+
+		}
+
+	}
+
+	return shortList.contacts, nil
+}
+
+func (k *Kademlia) findCloserNodes(shortList *ContactCandidates,
+	key string,
+	alreadyQueried map[*KademliaID]bool) (*ContactCandidates, map[*KademliaID]bool) {
+	done := make(chan []Contact)
+	timeoutCh := make(chan Contact)
+	closestContact := shortList.contacts[0]
+	pending := 0
+	countNoCloserNodes := 0
+	log.Printf("finding closer nodes, shortlist: %+v\n", shortList)
+	for {
+		select {
+		case newContacts := <-done:
+			shortList.AddUnique(newContacts)
+			log.Printf("sorting shortlist: %+v\n", shortList)
+			shortList.Sort()
+			newClosestContact := shortList.contacts[0]
+			if newClosestContact.Equals(&closestContact) {
+				countNoCloserNodes++
+			} else {
+				closestContact = newClosestContact
+			}
+			if (countNoCloserNodes) >= alpha {
+				return shortList, alreadyQueried
+			}
+			pending--
+		case badContact := <-timeoutCh:
+			for i, contact := range shortList.contacts {
+				if contact.Equals(&badContact) {
+					shortList.Remove(i)
+				}
+			}
+			pending--
+		default:
+			if pending < alpha {
+				for _, contact := range shortList.contacts {
+					if !alreadyQueried[contact.ID] {
+						alreadyQueried[contact.ID] = true
+						pending++
+						go func() {
+							contacts, err, timeout := k.FIND_NODE(contact, key)
+							if err != nil {
+								log.Fatal(err)
+								return
+							}
+							if timeout {
+								timeoutCh <- contact
+								return
+							}
+							done <- contacts
+							return
+						}()
+						break
+					}
+				}
+				if pending == 0 {
+					return shortList, alreadyQueried
+				}
+			}
+		}
 	}
 }
 
