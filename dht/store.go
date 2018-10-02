@@ -9,8 +9,9 @@ import (
 	"time"
 )
 
-const ExpirationPeriod = time.Hour * 24
-const ReplicationPeriod = time.Hour * 1
+const tExpire = time.Hour * 25
+const tRepublish = time.Hour * 24
+const tReplicate = time.Hour * 1
 
 type Store struct {
 	records map[[20]byte]*Record
@@ -23,18 +24,22 @@ func NewStore() *Store {
 }
 
 type Record struct {
-	value    []byte
-	expTime  time.Time
-	replTime time.Time
-	pinned   bool
+	value       []byte
+	replAt      time.Time
+	publishedAt time.Time
+	publisher   Contact
+	pinned      bool
+	mutex       *sync.Mutex
 }
 
-func (s *Store) Store(data []byte) *Record {
+func (s *Store) Store(data []byte, publisher Contact, publAt time.Time) *Record {
 	sha := GetKey(data)
 	record := &Record{value: data,
-		expTime:  time.Now(),
-		replTime: time.Now(),
-		pinned:   false}
+		replAt:      time.Now(),
+		publishedAt: publAt,
+		publisher:   publisher,
+		pinned:      false,
+		mutex:       s.mutex}
 	s.mutex.Lock()
 	s.records[sha] = record
 	s.mutex.Unlock()
@@ -99,12 +104,23 @@ func (s *Store) SendableRecord(key [20]byte) *pb.Record {
 	return nil
 }
 
+func (r *Record) Republish(t time.Time) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	r.publishedAt = t
+}
+
 func (r *Record) IsExpired(now time.Time) bool {
-	return now.Sub(r.expTime) >= ExpirationPeriod
+	return now.Sub(r.publishedAt) >= tExpire
 }
 
 func (r *Record) NeedsReplicate(now time.Time) bool {
-	return now.Sub(r.replTime) >= ReplicationPeriod
+	return now.Sub(r.replAt) >= tReplicate
+}
+
+func (r *Record) NeedsRepublish(now time.Time, me Contact) bool {
+	return now.Sub(r.publishedAt) >= tRepublish &&
+		me.ID.String() == r.publisher.ID.String()
 }
 
 func GetKey(data []byte) [20]byte {

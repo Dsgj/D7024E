@@ -28,8 +28,12 @@ message Peer {
 }
 
 message Record {
-    bytes key = 1;
+    bytes key = 1; //maybe unecessary
     bytes value = 2;
+    bool newPublish = 3;
+    Peer publisher = 4;
+    int64 publishedAt = 5;
+
 }
 
 message Data {

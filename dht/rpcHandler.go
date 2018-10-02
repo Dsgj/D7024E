@@ -2,6 +2,7 @@ package dht
 
 import (
 	pb "D7024E/dht/pb"
+	"time"
 )
 
 type rpcHandler func(*pb.Message) (*pb.Message, error)
@@ -47,11 +48,16 @@ func (k *Kademlia) handleFINDNODE(msg *pb.Message) (*pb.Message, error) {
 
 func (k *Kademlia) handleSTORE(msg *pb.Message) (*pb.Message, error) {
 	data := msg.GetData().GetRecord().GetValue()
-	_, exists := k.dataStore.GetRecord(GetKey(data))
-	if exists {
-		// what do
-	} else {
-		k.dataStore.Store(data)
+	key := GetKey(data)
+	rec, exists := k.dataStore.GetRecord(key)
+	publisher := PeerToContact(msg.GetData().GetRecord().GetPublisher())
+	publAt := time.Unix(msg.GetData().GetRecord().GetPublishedAt(), 0)
+	if exists { // record exists in local store
+		if msg.GetData().GetRecord().GetNewPublish() { //republish, update time
+			rec.Republish(publAt)
+		}
+	} else { // new record
+		k.dataStore.Store(data, publisher, publAt)
 	}
 	return nil, nil
 }
