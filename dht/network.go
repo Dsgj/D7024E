@@ -4,6 +4,7 @@ import (
 	pb "D7024E/dht/pb"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -16,6 +17,7 @@ type Network struct {
 	timedoutRequests chan int32
 	msgFct           *pb.MessageFactory
 	conn             *net.UDPConn
+	rMapLck          *sync.Mutex
 }
 
 func NewNetwork(port, addr string) *Network {
@@ -23,7 +25,8 @@ func NewNetwork(port, addr string) *Network {
 		addr:             addr,
 		requestMap:       make(map[int32](chan *pb.Message)),
 		msgFct:           pb.NewMessageFactory(),
-		timedoutRequests: make(chan int32, 100)}
+		timedoutRequests: make(chan int32, 100),
+		rMapLck:          &sync.Mutex{}}
 	return netw
 }
 
@@ -45,15 +48,19 @@ func Listen(k *Kademlia, ip string, port string) error {
 	network := k.netw
 	defer network.conn.Close()
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, 4096)
 
 	log.Println("Listening on port " + network.port)
 	for {
 		select {
 		case reqID := <-k.netw.timedoutRequests:
-			returnCh := network.requestMap[reqID]
-			close(returnCh)
-			delete(network.requestMap, reqID)
+			network.rMapLck.Lock()
+			returnCh, exists := network.requestMap[reqID]
+			if exists {
+				close(returnCh)
+				delete(network.requestMap, reqID)
+			}
+			network.rMapLck.Unlock()
 		default:
 			k.read(buf)
 		}
@@ -64,40 +71,48 @@ func (k *Kademlia) read(buf []byte) {
 	network := k.netw
 	n, addr, err := network.conn.ReadFromUDP(buf)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	msg := &pb.Message{}
 	err = proto.Unmarshal(buf[0:n], msg)
 	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Received %d sent at %s from %s",
-		msg.GetMessageID(),
-		time.Unix(msg.GetSentTime(), 0), addr)
-	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	if msg.Response {
+		log.Printf("Received response: reqID: %d type: %s sent at %s from %s",
+			msg.GetRequestID(),
+			msg.GetType(),
+			time.Unix(msg.GetSentTime(), 0), addr)
 		reqID := msg.GetRequestID()
-		returnCh := network.requestMap[reqID]
-		returnCh <- msg
-		close(returnCh)
-		delete(network.requestMap, reqID)
-		//TODO: cleanup timed-out messagehandlers
+		network.rMapLck.Lock()
+		returnCh, exists := network.requestMap[reqID]
+		if exists {
+			returnCh <- msg
+			close(returnCh)
+			delete(network.requestMap, reqID)
+		}
+		network.rMapLck.Unlock()
 	} else {
 		go k.handleMessage(msg)
+		log.Printf("Received request: reqID: %d type: %s sent at %s from %s",
+			msg.GetRequestID(),
+			msg.GetType(),
+			time.Unix(msg.GetSentTime(), 0), addr)
 	}
 	go k.updateContacts(msg)
 }
 
 func (n *Network) SendRequest(c *Contact, msg *pb.Message,
 	returnCh chan *pb.Message) (chan int32, error) {
-	n.requestMap[msg.GetRequestID()] = returnCh
 	err := n.SendMessage(c, msg)
 	if err != nil {
-		delete(n.requestMap, msg.GetRequestID())
 		return nil, err
 	}
+	n.rMapLck.Lock()
+	n.requestMap[msg.GetRequestID()] = returnCh
+	n.rMapLck.Unlock()
 	return n.timedoutRequests, nil
 }
 
@@ -115,8 +130,17 @@ func (n *Network) SendMessage(c *Contact,
 	if err != nil {
 		return err
 	}
-	log.Printf("Sent message %d type %s",
-		msg.GetMessageID(), msg.GetType())
+	if msg.Response {
+		log.Printf("Sent response: reqID: %d type: %s to %s",
+			msg.GetRequestID(),
+			msg.GetType(),
+			c.Address)
+	} else {
+		log.Printf("Sent request: reqID: %d type: %s to %s",
+			msg.GetRequestID(),
+			msg.GetType(),
+			c.Address)
+	}
 
 	return nil
 }
@@ -125,7 +149,8 @@ func (k *Kademlia) handleMessage(msg *pb.Message) {
 	handler := k.getTypeHandler(msg.GetType())
 	respMsg, err := handler(msg)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	if respMsg == nil {
 		return
@@ -133,7 +158,7 @@ func (k *Kademlia) handleMessage(msg *pb.Message) {
 	receiver := PeerToContact(respMsg.GetReceiver())
 	err = k.netw.SendMessage(&receiver, respMsg)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 }
 
