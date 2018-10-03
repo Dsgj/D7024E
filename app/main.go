@@ -2,7 +2,6 @@ package main
 
 import (
 	d "D7024E/dht"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -39,18 +38,18 @@ func bootstrap(k *d.Kademlia, me d.Contact) {
 		log.Println(err)
 	}
 	if len(closestContacts) == 0 {
-		log.Printf("Received no contacts\nRestarting bootstrap")
+		log.Printf("Received no contacts, restarting bootstrap")
 		time.Sleep(time.Second * 5)
 		bootstrap(k, me)
 	} else {
-		fmt.Printf("received contacts: %+v\n", closestContacts)
+		log.Printf("Bootstrap done, received contacts: %+v\n", closestContacts)
 	}
 
 }
 
 func getSelf(ip string) d.Contact {
 	if ip == bootstrapAddr { // im the bootstrapnode (this is bad, but works)
-		fmt.Printf("I'm the bootstrap node\n")
+		log.Printf("I'm the bootstrap node\n")
 		return d.NewContact(d.NewKademliaID(bootstrapID), ip)
 	} else {
 		id := d.NewRandomKademliaID()

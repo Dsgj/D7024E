@@ -168,14 +168,12 @@ func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
 				}
 			}
 		}
-		log.Printf("shortlist built: %+v\n", shortList)
+		log.Printf("current shortlist: %+v\n", shortList)
 		if countNodesToQuery == 0 { // we queried all nodes
-			log.Printf("queried all nodes")
 			shortList.Sort()
 			shortList.Cut()
 			return shortList.contacts, nil
 		} else {
-			log.Printf("tiem to query some shit")
 			_, shortList, alreadyQueried = k.findCloserNodesOrValue(shortList, key, alreadyQueried, false)
 
 		}
@@ -205,14 +203,12 @@ func (k *Kademlia) IterativeFindValue(key string) ([]byte, []Contact, error) {
 				}
 			}
 		}
-		log.Printf("shortlist built: %+v\n", shortList)
+		log.Printf("current shortlist: %+v\n", shortList)
 		if countNodesToQuery == 0 { // we queried all nodes
-			log.Printf("queried all nodes")
 			shortList.Sort()
 			shortList.Cut()
 			return nil, shortList.contacts, nil
 		} else {
-			log.Printf("tiem to query some shit")
 			value, shortList, alreadyQueried = k.findCloserNodesOrValue(shortList, key, alreadyQueried, true)
 			if value != nil {
 				return value, shortList.contacts, nil
@@ -319,7 +315,7 @@ func (k *Kademlia) Update(c Contact) {
 		bucket.mutex.Unlock()
 		_, err, timeout := k.PING(head.Value.(Contact))
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 		if timeout {
 			bucket.mutex.Lock()

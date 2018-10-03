@@ -8,7 +8,8 @@ import (
 	"time"
 )
 
-const tRefresh = time.Hour * 1
+//const tRefresh = time.Hour * 1
+const tRefresh = time.Second * 20
 
 // bucket definition
 // contains a List
@@ -43,11 +44,11 @@ func (bucket *bucket) AddContact(contact Contact) {
 	if element == nil {
 		if bucket.list.Len() < bucketSize {
 			bucket.list.PushFront(contact)
-			log.Printf("added contact to bucket\n: %+v\n", contact)
+			log.Printf("added contact to bucket: %+v\n", contact)
 		}
 	} else {
 		bucket.list.MoveToFront(element)
-		log.Printf("moved contact to front of bucket\n: %+v\n", contact)
+		log.Printf("moved contact to front of bucket: %+v\n", contact)
 	}
 }
 
@@ -75,7 +76,7 @@ func (bucket *bucket) Len() int {
 }
 
 func (bucket *bucket) NeedsRefresh(t time.Time) bool {
-	return t.Sub(bucket.lastUpdate) >= tRefresh
+	return t.Sub(bucket.lastUpdate) >= tRefresh && bucket.Len() > 0
 }
 
 func (bucket *bucket) Refresh(t time.Time) {
@@ -86,9 +87,12 @@ func (bucket *bucket) Refresh(t time.Time) {
 
 func (bucket *bucket) GetRandomContact() *Contact {
 	bucket.mutex.Lock()
+	if bucket.Len() == 0 {
+		return nil
+	}
 	defer bucket.mutex.Unlock()
 	rand.Seed(time.Now().UnixNano())
-	index := rand.Intn(bucket.Len() - 1)
+	index := rand.Intn(bucket.Len()) - 1
 	j := 0
 	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
 		if j == index {
