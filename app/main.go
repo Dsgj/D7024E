@@ -39,25 +39,19 @@ func main() {
 
 func bootstrap(k *d.Kademlia, me d.Contact) {
 	bs := d.NewContact(d.NewKademliaID(bootstrapID), bootstrapAddr)
-	// closestContacts, err, timeout := k.FIND_NODE(bs, me.ID.String())
 	k.Update(bs)
 	closestContacts, err := k.IterativeFindNode(me.ID.String())
 	if err != nil {
 		log.Fatal(err)
 	}
-	// if timeout {
-	// 	log.Printf("Request timed out\nRestarting bootstrap")
-	// 	bootstrap(k, me)
-	// }
 	if len(closestContacts) == 0 {
 		log.Printf("Received no contacts\nRestarting bootstrap")
 		time.Sleep(time.Second * 5)
 		bootstrap(k, me)
+	} else {
+		fmt.Printf("received contacts: %+v\n", closestContacts)
 	}
-	fmt.Printf("received contacts: %+v\n", closestContacts)
-	// for _, contact := range closestContacts {
-	// 	k.Update(contact)
-	// }
+
 }
 
 func getSelf(ip string) d.Contact {
