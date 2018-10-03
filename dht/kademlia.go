@@ -102,7 +102,7 @@ func (k *Kademlia) STORE(c Contact, rec *Record, publish bool) error {
 	return nil
 }
 
-func (k *Kademlia) FINDVALUE(recipient Contact,
+func (k *Kademlia) FIND_VALUE(recipient Contact,
 	key string) ([]byte, []Contact, error, bool) {
 	reqID := k.newRequest()
 	receiver := ContactToPeer(recipient)
@@ -176,24 +176,29 @@ func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
 			return shortList.contacts, nil
 		} else {
 			log.Printf("tiem to query some shit")
-			shortList, alreadyQueried = k.findCloserNodes(shortList, key, alreadyQueried)
+			_, shortList, alreadyQueried = k.findCloserNodesOrValue(shortList, key, alreadyQueried, false)
+
 		}
 
 	}
 	return shortList.contacts, nil
 }
 
-func (k *Kademlia) findCloserNodes(shortList *ContactCandidates,
+func (k *Kademlia) findCloserNodesOrValue(shortList *ContactCandidates,
 	key string,
-	alreadyQueried map[*KademliaID]bool) (*ContactCandidates, map[*KademliaID]bool) {
+	alreadyQueried map[*KademliaID]bool,
+	wantValue bool) ([]byte, *ContactCandidates, map[*KademliaID]bool) {
 	done := make(chan []Contact)
 	timeoutCh := make(chan Contact)
+	valueCh := make(chan []byte)
 	closestContact := shortList.contacts[0]
 	pending := 0
 	countNoCloserNodes := 0
 	log.Printf("finding closer nodes, shortlist: %+v\n", shortList)
 	for {
 		select {
+		case value := <-valueCh:
+			return value, shortList, alreadyQueried
 		case newContacts := <-done:
 			shortList.AddUnique(newContacts)
 			shortList.Sort()
@@ -206,7 +211,7 @@ func (k *Kademlia) findCloserNodes(shortList *ContactCandidates,
 				countNoCloserNodes = 0
 			}
 			if (countNoCloserNodes) >= alpha {
-				return shortList, alreadyQueried
+				return nil, shortList, alreadyQueried
 			}
 			pending--
 		case badContact := <-timeoutCh:
@@ -223,7 +228,11 @@ func (k *Kademlia) findCloserNodes(shortList *ContactCandidates,
 						alreadyQueried[contact.ID] = true
 						pending++
 						go func() {
-							contacts, err, timeout := k.FIND_NODE(contact, key)
+							value, contacts, err, timeout := k.FIND_VALUE(contact, key)
+							if value != nil && wantValue {
+								valueCh <- value
+								return
+							}
 							if err != nil {
 								log.Fatal(err)
 								return
@@ -239,7 +248,7 @@ func (k *Kademlia) findCloserNodes(shortList *ContactCandidates,
 					}
 				}
 				if pending == 0 {
-					return shortList, alreadyQueried
+					return nil, shortList, alreadyQueried
 				}
 			}
 		}
