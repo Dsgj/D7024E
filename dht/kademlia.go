@@ -143,24 +143,26 @@ func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
 		for i := 0; i < alpha; i++ {
 			for _, contact := range toBeQueried {
 				if !alreadyQueried[contact.ID] && !alreadyAdded[contact.ID] {
-					shortList.Add(contact)
-					alreadyAdded[contact.ID] = true
-					countNodesToQuery++
+					if !shortList.Exists(contact) {
+						shortList.Add(contact)
+						alreadyAdded[contact.ID] = true
+						countNodesToQuery++
+					}
 				}
 			}
 		}
 		log.Printf("shortlist built: %+v\n", shortList)
 		if countNodesToQuery == 0 { // we queried all nodes
 			log.Printf("queried all nodes")
+			shortList.Sort()
+			shortList.Cut()
 			return shortList.contacts, nil
 		} else {
 			log.Printf("tiem to query some shit")
 			shortList, alreadyQueried = k.findCloserNodes(shortList, key, alreadyQueried)
-
 		}
 
 	}
-
 	return shortList.contacts, nil
 }
 
@@ -177,13 +179,14 @@ func (k *Kademlia) findCloserNodes(shortList *ContactCandidates,
 		select {
 		case newContacts := <-done:
 			shortList.AddUnique(newContacts)
-			log.Printf("sorting shortlist: %+v\n", shortList)
 			shortList.Sort()
+			shortList.Cut()
 			newClosestContact := shortList.contacts[0]
 			if newClosestContact.Equals(&closestContact) {
 				countNoCloserNodes++
 			} else {
 				closestContact = newClosestContact
+				countNoCloserNodes = 0
 			}
 			if (countNoCloserNodes) >= alpha {
 				return shortList, alreadyQueried
