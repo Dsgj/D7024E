@@ -43,6 +43,7 @@ func (s *Store) Store(data []byte, publisher Contact, publAt time.Time) *Record 
 	s.mutex.Lock()
 	s.records[sha] = record
 	s.mutex.Unlock()
+	log.Printf("record added to store: %v", record)
 	return record
 }
 

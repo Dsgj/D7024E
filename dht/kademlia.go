@@ -3,6 +3,7 @@ package dht
 import (
 	pb "D7024E/dht/pb"
 	"log"
+	"math/rand"
 	"time"
 )
 
@@ -362,6 +363,18 @@ func (k *Kademlia) StartScheduler() {
 		}
 	}
 	go k.scheduler.RepeatTask(10, task)
+}
+
+func (k *Kademlia) TestStore() { //manual testing
+	rand.Seed(time.Now().UnixNano())
+	N := rand.Intn(10)
+	testBytes := make([]byte, N)
+	for i := 0; i < N; i++ {
+		testBytes[i] = 'a' + byte(i%26)
+	}
+	rec := k.dataStore.Store(testBytes, k.rt.me, time.Now())
+	log.Printf("iterativestore on rec: %v", rec)
+	k.IterativeStore(GetKey(testBytes), true)
 }
 
 func (kademlia *Kademlia) LookupContact(target *Contact) {

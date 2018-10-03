@@ -43,6 +43,8 @@ func bootstrap(k *d.Kademlia, me d.Contact) {
 		bootstrap(k, me)
 	} else {
 		log.Printf("Bootstrap done, received contacts: %+v\n", closestContacts)
+		// test store
+		k.TestStore()
 	}
 
 }
