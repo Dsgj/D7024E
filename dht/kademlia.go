@@ -342,10 +342,10 @@ func (k *Kademlia) StartScheduler() {
 				k.dataStore.DelRecord(key)
 			} else if record.NeedsRepublish(time.Now(), k.rt.me) {
 				record.Republish(time.Now())
-				//go iterativeStore (...publish true...)
+				go k.IterativeStore(key, true)
 			} else if record.NeedsReplicate(time.Now()) {
 				record.Replicate(time.Now())
-				//go iterativeStore (...publish false...)
+				go k.IterativeStore(key, false)
 			}
 		}
 	}
