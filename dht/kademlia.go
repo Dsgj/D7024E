@@ -19,7 +19,6 @@ type Kademlia struct {
 
 func NewKademlia(me Contact, port string) *Kademlia {
 	rt := NewRoutingTable(me)
-	// hardcoded port for now
 	netw := NewNetwork(port, me.Address)
 	k := &Kademlia{rt: rt,
 		netw:      netw,
@@ -129,6 +128,10 @@ func (k *Kademlia) FINDVALUE(recipient Contact,
 		timeoutCh <- reqID
 		return nil, nil, nil, true
 	}
+}
+
+func (k *Kademlia) IterativeStore(rec *Record, publish bool) {
+
 }
 
 func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {

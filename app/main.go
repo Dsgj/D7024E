@@ -21,14 +21,9 @@ func main() {
 	me := getSelf(ip)
 	k := d.NewKademlia(me, port)
 
-	//myip := GetOutboundIP()
-	//log.Printf("IP Address: %d", myip)
-	//ListIPs()
-
 	// init listener/conn
 	k.InitConn()
-	//TODO: listen does not use these params for now, clean up
-	go d.Listen(k, ip, port)
+	go d.Listen(k)
 
 	if ip != bootstrapAddr {
 		bootstrap(k, me)
@@ -42,7 +37,7 @@ func bootstrap(k *d.Kademlia, me d.Contact) {
 	k.Update(bs)
 	closestContacts, err := k.IterativeFindNode(me.ID.String())
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	if len(closestContacts) == 0 {
 		log.Printf("Received no contacts\nRestarting bootstrap")

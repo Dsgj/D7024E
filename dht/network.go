@@ -44,7 +44,7 @@ func (k *Kademlia) InitConn() {
 	n.conn = serverConn
 }
 
-func Listen(k *Kademlia, ip string, port string) error {
+func Listen(k *Kademlia) error {
 	network := k.netw
 	defer network.conn.Close()
 
