@@ -267,13 +267,21 @@ func (k *Kademlia) findCloserNodesOrValue(shortList *ContactCandidates,
 						alreadyQueried[contact.ID] = true
 						pending++
 						go func() {
-							value, contacts, err, timeout := k.FIND_VALUE(contact, key)
-							if value != nil && wantValue {
-								valueCh <- value
-								return
+							var value []byte
+							var contacts []Contact
+							var err error
+							var timeout bool
+							if wantValue {
+								value, contacts, err, timeout = k.FIND_VALUE(contact, key)
+							} else {
+								contacts, err, timeout = k.FIND_NODE(contact, key)
 							}
 							if err != nil {
-								log.Fatal(err)
+								log.Println(err)
+								return
+							}
+							if value != nil && wantValue {
+								valueCh <- value
 								return
 							}
 							if timeout {
@@ -325,14 +333,22 @@ func (k *Kademlia) Update(c Contact) {
 
 func (k *Kademlia) StartScheduler() {
 	task := func() {
-		log.Printf("current contacts: %v", k.rt.FindClosestContacts(k.rt.me.ID, 20, k.rt.me))
+		//log.Printf("current contacts: %v", k.rt.FindClosestContacts(k.rt.me.ID, 20, k.rt.me))
 		// refresh buckets
 		for _, bucket := range k.rt.buckets {
 			if bucket.NeedsRefresh(time.Now()) {
-				bucket.Refresh(time.Now())
 				contact := bucket.GetRandomContact()
 				if contact != nil {
-					k.IterativeFindNode(contact.ID.String())
+					bucket.Refresh(time.Now())
+					log.Printf("refreshing bucket: %v", bucket)
+					go func() {
+						_, err := k.IterativeFindNode(contact.ID.String())
+						if err != nil {
+							log.Println(err)
+						} else {
+							log.Printf("bucket refreshed: %v", bucket)
+						}
+					}()
 				}
 			}
 		}
