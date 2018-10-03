@@ -1,0 +1,4 @@
+#Run all tests and save coverage % of all statements
+go test -coverprofile=cover.out
+#Outputs the result in plain text
+go tool cover -func=cover.out
