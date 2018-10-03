@@ -15,6 +15,8 @@ func (k *Kademlia) getTypeHandler(t pb.Message_MessageType) rpcHandler {
 		return k.handleFINDNODE
 	case pb.Message_STORE:
 		return k.handleSTORE
+	case pb.Message_FIND_VALUE:
+		return k.handleFINDVALUE
 	default:
 		return nil
 	}
@@ -74,8 +76,6 @@ func (k *Kademlia) handleFINDVALUE(msg *pb.Message) (*pb.Message, error) {
 		target := NewKademliaID(msg.GetKey())
 		contacts := k.rt.FindClosestContacts(target, 20, PeerToContact(msg.GetSender()))
 		peers := ContactsToPeers(contacts)
-		respMsg := k.netw.msgFct.NewFindNodeMessage(msg.GetRequestID(), msg.GetKey(),
-			msg.GetReceiver(), msg.GetSender(), true)
 		respMsg.AddPeerData(peers)
 	}
 
