@@ -107,7 +107,7 @@ func (k *Kademlia) FIND_VALUE(recipient Contact,
 	reqID := k.newRequest()
 	receiver := ContactToPeer(recipient)
 	sender := ContactToPeer(k.rt.me)
-	msg := k.netw.msgFct.NewFindNodeMessage(reqID, key, sender, receiver, false)
+	msg := k.netw.msgFct.NewFindValueMessage(reqID, key, sender, receiver, false)
 	respCh := make(chan *pb.Message)
 	timeoutCh, err := k.netw.SendRequest(&recipient, msg, respCh)
 	if err != nil {
@@ -182,6 +182,45 @@ func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
 
 	}
 	return shortList.contacts, nil
+}
+
+func (k *Kademlia) IterativeFindValue(key string) ([]byte, []Contact, error) {
+	toBeQueried := k.rt.FindClosestContacts(NewKademliaID(key), 20, k.rt.me)
+	log.Printf("to be queried: %+v\n", toBeQueried)
+	alreadyQueried := make(map[*KademliaID]bool)
+	shortList := &ContactCandidates{}
+	var value []byte
+
+	for {
+		countNodesToQuery := 0
+		alreadyAdded := make(map[*KademliaID]bool)
+		for i := 0; i < alpha; i++ {
+			for _, contact := range toBeQueried {
+				if !alreadyQueried[contact.ID] && !alreadyAdded[contact.ID] {
+					if !shortList.Exists(contact) {
+						shortList.Add(contact)
+						alreadyAdded[contact.ID] = true
+						countNodesToQuery++
+					}
+				}
+			}
+		}
+		log.Printf("shortlist built: %+v\n", shortList)
+		if countNodesToQuery == 0 { // we queried all nodes
+			log.Printf("queried all nodes")
+			shortList.Sort()
+			shortList.Cut()
+			return nil, shortList.contacts, nil
+		} else {
+			log.Printf("tiem to query some shit")
+			value, shortList, alreadyQueried = k.findCloserNodesOrValue(shortList, key, alreadyQueried, true)
+			if value != nil {
+				return value, shortList.contacts, nil
+			}
+		}
+
+	}
+	return nil, shortList.contacts, nil
 }
 
 func (k *Kademlia) findCloserNodesOrValue(shortList *ContactCandidates,
