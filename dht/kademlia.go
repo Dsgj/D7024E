@@ -332,7 +332,7 @@ func (k *Kademlia) StartScheduler() {
 				bucket.Refresh(time.Now())
 				contact := bucket.GetRandomContact()
 				if contact != nil {
-					//iterativeFindNode(...contact...)
+					k.IterativeFindNode(contact.ID.String())
 				}
 			}
 		}
