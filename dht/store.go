@@ -9,9 +9,12 @@ import (
 	"time"
 )
 
-const tExpire = time.Hour * 25
-const tRepublish = time.Hour * 24
-const tReplicate = time.Hour * 1
+// const tExpire = time.Hour * 25
+// const tRepublish = time.Hour * 24
+// const tReplicate = time.Hour * 1
+const tExpire = time.Second * 60    //testing
+const tRepublish = time.Second * 45 //testing
+const tReplicate = time.Second * 20 //testing
 
 type Store struct {
 	records map[[20]byte]*Record
@@ -54,7 +57,6 @@ func (s *Store) GetRecord(key [20]byte) (*Record, bool) {
 	if exists {
 		return record, true
 	} else {
-		log.Printf("No record found for key: %s", ToString(key))
 		return nil, false
 	}
 
@@ -114,12 +116,14 @@ func (r *Record) Republish(t time.Time) {
 	defer r.mutex.Unlock()
 	r.publishedAt = t
 	r.replAt = t
+	log.Printf("record publishedAt updated: %v", r)
 }
 
 func (r *Record) Replicate(t time.Time) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	r.replAt = t
+	log.Printf("record replAt updated: %v", r)
 }
 
 func (r *Record) IsExpired(now time.Time) bool {

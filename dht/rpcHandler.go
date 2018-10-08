@@ -2,6 +2,7 @@ package dht
 
 import (
 	pb "D7024E/dht/pb"
+	"log"
 	"time"
 )
 
@@ -52,6 +53,10 @@ func (k *Kademlia) handleSTORE(msg *pb.Message) (*pb.Message, error) {
 	data := msg.GetData().GetRecord().GetValue()
 	key := GetKey(data)
 	rec, exists := k.dataStore.GetRecord(key)
+	// testing
+	log.Printf("publisher(peer): %+v\n", msg.GetData().GetRecord().GetPublisher())
+	log.Printf("publish: %+v\n", msg.GetData().GetRecord().GetNewPublish())
+	log.Printf("value: %+v\n", msg.GetData().GetRecord().GetValue())
 	publisher := PeerToContact(msg.GetData().GetRecord().GetPublisher())
 	publAt := time.Unix(msg.GetData().GetRecord().GetPublishedAt(), 0)
 	if exists { // record exists in local store
