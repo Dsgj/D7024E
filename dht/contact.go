@@ -32,7 +32,7 @@ func ContactToPeer(c Contact) *pb.Peer {
 }
 
 func PeerToContact(p *pb.Peer) Contact {
-	dist := &KademliaID{}
+	var dist *KademliaID
 	if p.GetDistance() != "" {
 		dist = NewKademliaID(p.GetDistance())
 	}
