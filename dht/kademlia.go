@@ -132,20 +132,22 @@ func (k *Kademlia) FIND_VALUE(recipient Contact,
 }
 
 func (k *Kademlia) IterativeStore(key [20]byte, publish bool) {
+	rec, exists := k.dataStore.GetRecord(key)
+	if !exists {
+		log.Printf("record not found for key: %+v\n", key)
+		return
+	}
 	closestContacts, err := k.IterativeFindNode(ToString(key))
 	if err != nil {
 		log.Println(err)
 	}
 	for _, contact := range closestContacts {
-		reqID := k.newRequest()
-		receiver := ContactToPeer(contact)
-		sender := ContactToPeer(k.rt.me)
-		msg := k.netw.msgFct.NewStoreMessage(reqID, ToString(key), sender, receiver, false)
-		msg.AddRecord(k.dataStore.SendableRecord(key, publish))
-		err := k.netw.SendMessage(&contact, msg)
-		if err != nil {
-			log.Println(err)
-		}
+		go func(c Contact) {
+			err := k.STORE(c, rec, publish)
+			if err != nil {
+				log.Println(err)
+			}
+		}(contact)
 	}
 }
 
