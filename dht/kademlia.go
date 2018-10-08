@@ -334,20 +334,20 @@ func (k *Kademlia) StartScheduler() {
 	task := func() {
 		//log.Printf("current contacts: %v", k.rt.FindClosestContacts(k.rt.me.ID, 20, k.rt.me))
 		// refresh buckets
-		for _, bucket := range k.rt.buckets {
+		for i, bucket := range k.rt.buckets {
 			if bucket.NeedsRefresh(time.Now()) {
 				contact := bucket.GetRandomContact()
 				if contact != nil {
 					bucket.Refresh(time.Now())
-					log.Printf("refreshing bucket: %v", bucket)
-					go func() {
+					log.Printf("refreshing bucket: %d", i)
+					go func(i int) {
 						_, err := k.IterativeFindNode(contact.ID.String())
 						if err != nil {
 							log.Println(err)
 						} else {
-							log.Printf("bucket refreshed: %v", bucket)
+							log.Printf("bucket refreshed: %v", i)
 						}
-					}()
+					}(i)
 				}
 			}
 		}
@@ -357,10 +357,16 @@ func (k *Kademlia) StartScheduler() {
 				k.dataStore.DelRecord(key)
 			} else if record.NeedsRepublish(time.Now(), k.rt.me) {
 				record.Republish(time.Now())
-				go k.IterativeStore(key, true)
+				go func(key [20]byte, rec *Record) {
+					k.IterativeStore(key, true)
+					log.Printf("republish done: %v", rec)
+				}(key, record)
 			} else if record.NeedsReplicate(time.Now()) {
 				record.Replicate(time.Now())
-				go k.IterativeStore(key, false)
+				go func(key [20]byte, rec *Record) {
+					k.IterativeStore(key, false)
+					log.Printf("replicate done: %v", rec)
+				}(key, record)
 			}
 		}
 	}
