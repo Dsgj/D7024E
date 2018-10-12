@@ -15,7 +15,7 @@ func Routes(r chi.Router, k *dht.Kademlia) {
 		fetchFile(w, r, k)
 	})
 	r.Post("/files", func(w http.ResponseWriter, r *http.Request) {
-		getFile(w, r, k)
+		storeFile(w, r, k)
 	})
 	r.Patch("/files/{key}/pin", func(w http.ResponseWriter, r *http.Request) {
 		pinFile(w, r, k)
@@ -35,7 +35,7 @@ func fetchFile(w http.ResponseWriter, r *http.Request, k *dht.Kademlia) {
 	w.Write(data)
 }
 
-func getFile(w http.ResponseWriter, r *http.Request, k *dht.Kademlia) {
+func storeFile(w http.ResponseWriter, r *http.Request, k *dht.Kademlia) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, http.StatusText(400), 400)
