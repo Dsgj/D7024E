@@ -2,34 +2,26 @@
 FROM larjim/kademlialab:latest
 
 # Copy the current directory contents into the container at /home/go/src/D7024E
-COPY . /root/go/src/D7024E
+COPY . /home/go/src/D7024E
 
-#Copy protobuf into the container
-COPY /import/protobuf-master/proto /root/go/src/vendor/github.com/golang/protobuf/proto
+#Copy shit into the container (go get doesnt work properly)
+COPY /import/protobuf-master/proto /home/go/src/github.com/golang/protobuf/proto
+COPY /import/urfave /home/go/src/github.com/urfave
+COPY /import/takama /home/go/src/github.com/takama
+COPY /import/go-chi /home/go/src/github.com/go-chi
+COPY /import/resty.v1 /home/go/src/gopkg.in/resty.v1
 
-#Sets the working directory to where to code is
-WORKDIR /root/go/src/D7024E
+ENV GOPATH=/home/go
+ENV GOBIN=$GOPATH/bin
+ENV PATH=$PATH:$GOBIN
 
-#Compiles the file "client.go" and names it "clientBin"
-#OBS!! This is done when the image it built!!
-#RUN /usr/local/go/bin/go build -o clientBin client.go
+WORKDIR /home/go/src/D7024E/server
+RUN /usr/local/go/bin/go build server.go
+RUN /usr/local/go/bin/go install
+WORKDIR /home/go/src/D7024E/client
+RUN /usr/local/go/bin/go build client.go
+RUN /usr/local/go/bin/go install
 
-#Run the composed file
-#OBS!! This is done when the container is running!!
-#CMD /usr/local/go/bin/go run ./app/main.go
-
-#Starts the app and passes the ip of the container as an argument
-CMD /usr/local/go/bin/go run ./app/main.go $(hostname -i)
-
-# Make port 80 available to the world outside this container
-#EXPOSE 80
-
-
-#För att bygga in ny image kör man:
-#
-# docker build -t testimage:latest .
-#
-# docker swarm init
-#
-# docker stack deploy -c docker-compose-lab.yml
-#
+#Starts the server and passes the ip of the container as an argument
+WORKDIR /home/go/bin
+CMD server $(hostname -i)
