@@ -373,6 +373,29 @@ func (k *Kademlia) StartScheduler() {
 	go k.scheduler.RepeatTask(10, task)
 }
 
+func (k *Kademlia) StoreFile(data []byte) string {
+	rec := k.dataStore.Store(data, k.rt.me, time.Now())
+	log.Printf("iterativestore on rec: %v", rec)
+	k.IterativeStore(GetKey(rec.value), true)
+	return ToString(GetKey(rec.value))
+}
+
+func (k *Kademlia) FetchFile(key string) []byte {
+	log.Printf("(FetchFile) key: %s", key)
+	keyBytes, err := FromString(key)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	rec, exists := k.dataStore.GetRecord(keyBytes)
+	if exists {
+		log.Printf("(FetchFile) found value: %s", rec.value)
+		return rec.value
+	}
+	log.Printf("(FetchFile) value not found")
+	return nil
+}
+
 func (k *Kademlia) TestStore() { //manual testing
 	rand.Seed(time.Now().UnixNano())
 	N := rand.Intn(10)
