@@ -4,6 +4,7 @@ import (
 	pb "D7024E/dht/pb"
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"log"
 	"sync"
 	"time"
@@ -146,13 +147,15 @@ func ToString(data [20]byte) string {
 	return hex.EncodeToString(data[:])
 }
 
-func FromString(s string) [20]byte {
+func FromString(s string) ([20]byte, error) {
 	decoded, _ := hex.DecodeString(s)
-
 	newArray := [20]byte{}
+	if len(decoded) != 20 {
+		return newArray, errors.New("cant convert string, length must equal 20")
+	}
 	for i := 0; i < 20; i++ {
 		newArray[i] = decoded[i]
 	}
 
-	return newArray
+	return newArray, nil
 }

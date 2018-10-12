@@ -70,7 +70,10 @@ func (k *Kademlia) handleSTORE(msg *pb.Message) (*pb.Message, error) {
 }
 
 func (k *Kademlia) handleFINDVALUE(msg *pb.Message) (*pb.Message, error) {
-	key := FromString(msg.GetKey())
+	key, err := FromString(msg.GetKey())
+	if err != nil {
+		return nil, err
+	}
 	respMsg := k.netw.msgFct.NewFindValueMessage(msg.GetRequestID(), msg.GetKey(),
 		msg.GetReceiver(), msg.GetSender(), true)
 
