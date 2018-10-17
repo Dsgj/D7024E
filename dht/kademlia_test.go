@@ -7,18 +7,17 @@ import (
 )
 
 func TestKademlia(t *testing.T) {
+	fmt.Println("TestKademlia: ENTER!")
 
 	//creates a new instance of Kademlia
 	kademlia1 := NewKademlia(NewContact(NewKademliaID("ffffffff00000000000000000000000000000000"), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
 
-	//fmt.Println(kademlia1.netw.port)
+	fmt.Println("Set Port: " + kademlia1.netw.port)
 
 	//checks if the port is set
 	if kademlia1.netw.port != "1337" {
 		t.Errorf("Port was incorrect, got: %s, want: %s.", kademlia1.netw.port, "1337")
 	}
-
-	fmt.Println(" ")
 
 	//Creates a test Kademlia ID to compare with the ID from the created instance of Kademlia
 	testID := KademliaID{}
@@ -29,7 +28,7 @@ func TestKademlia(t *testing.T) {
 
 	//checks if the ID is set
 	if *kademlia1.rt.me.ID != testID {
-		t.Errorf("KademliaID was incorrect, got: %d, want: %d.", kademlia1.rt.me.ID, &testID)
+		t.Errorf("KademliaID was incorrect, got: %d, want: %d. \n", kademlia1.rt.me.ID, &testID)
 	}
 
 	//This checks that the values has ben set
@@ -39,21 +38,14 @@ func TestKademlia(t *testing.T) {
 
 	Testupdate(t, *kademlia1)
 
-	//test, _ := kademlia1.IterativeFindNode("ffffffff00000000000000000000000000000000")
-
-	//fmt.Println(test)
-
-	//kademlia1.Update( NewContact(NewKademliaID("fffffff000000000000000000000000000000000"), "localhost:8000"))
-
+	fmt.Println("TestKademlia: EXIT!\n ")
 }
 
 func TestnewRequest(t *testing.T, kademlia1 Kademlia) {
 	requestID := kademlia1.newRequest()
-
 	if kademlia1.reqCount != requestID+1 {
-		t.Errorf("Request count was incorrect, is: %d, should be: %d.", kademlia1.reqCount, requestID+1)
+		t.Errorf("Request count was incorrect, is: %d, should be: %d.\n", kademlia1.reqCount, requestID+1)
 	}
-
 }
 
 func Testupdate(t *testing.T, kademlia1 Kademlia) {
@@ -71,7 +63,7 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 	lenOfBucket2 := kademlia1.rt.buckets[index].Len()
 
 	if lenOfBucket1 == lenOfBucket2 {
-		t.Errorf("Kademlia.Update() did not change the number of contacts in the updated bucket.")
+		t.Errorf("Kademlia.Update() did not change the number of contacts in the updated bucket. \n")
 	}
 
 	/* Checks if kademlia.Update lets a node att itself by checking the difference in the size of the bucked that it would have been in
@@ -86,7 +78,31 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 	lenOfBucket2 = kademlia1.rt.buckets[index].Len()
 
 	if lenOfBucket1 != lenOfBucket2 {
-		t.Errorf("Kademlia.Update() did let a node add itself.")
+		t.Errorf("Kademlia.Update() did let a node add itself. \n")
 	}
 
+}
+
+func TestKademlia2(t *testing.T) {
+	fmt.Println("TestKademlia2: ENTER!")
+	//creates a new instance of Kademlia
+	kademlia1 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
+	kademlia2 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337")
+	fmt.Println("Randomized KademliaID: " , kademlia1.rt.me.ID)
+
+	//checks if the port is set
+	if kademlia1.netw.port != "1337" {
+		t.Errorf("Port was incorrect, got: %s, want: %s.", kademlia1.netw.port, "1337")
+	}
+
+	//checks if the ID is set
+	if len(*kademlia1.rt.me.ID) != 20 {
+		t.Errorf("The lenght of the KademliaID was incorrect, got: %d, want: %d. \n", len(kademlia1.rt.me.ID),20 )
+	}
+
+	//checks if the randomized ID is unique
+	if *kademlia1.rt.me.ID == *kademlia2.rt.me.ID  {
+		t.Errorf("The ID has been generated twice")
+	}
+	fmt.Println("TestKademlia2: EXIT!\n ")
 }
