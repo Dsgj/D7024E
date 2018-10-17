@@ -3,7 +3,9 @@ package dht
 import (
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 func TestKademlia(t *testing.T) {
@@ -83,26 +85,64 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 
 }
 
-func TestKademlia2(t *testing.T) {
-	fmt.Println("TestKademlia2: ENTER!")
+func TestKademlia_RandomID(t *testing.T) {
+	fmt.Println("TestKademlia_RandomID: ENTER!")
 	//creates a new instance of Kademlia
-	kademlia1 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
+	kademlia3 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
 	kademlia2 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337")
-	fmt.Println("Randomized KademliaID: " , kademlia1.rt.me.ID)
+	fmt.Println("Randomized KademliaID: " , kademlia3.rt.me.ID)
 
 	//checks if the port is set
-	if kademlia1.netw.port != "1337" {
-		t.Errorf("Port was incorrect, got: %s, want: %s.", kademlia1.netw.port, "1337")
+	if kademlia3.netw.port != "1337" {
+		t.Errorf("Port was incorrect, got: %s, want: %s.", kademlia3.netw.port, "1337")
 	}
 
 	//checks if the ID is set
-	if len(*kademlia1.rt.me.ID) != 20 {
-		t.Errorf("The lenght of the KademliaID was incorrect, got: %d, want: %d. \n", len(kademlia1.rt.me.ID),20 )
+	if len(*kademlia3.rt.me.ID) != 20 {
+		t.Errorf("The lenght of the KademliaID was incorrect, got: %d, want: %d. \n", len(kademlia3.rt.me.ID),20 )
 	}
 
 	//checks if the randomized ID is unique
-	if *kademlia1.rt.me.ID == *kademlia2.rt.me.ID  {
+	if *kademlia3.rt.me.ID == *kademlia2.rt.me.ID  {
 		t.Errorf("The ID has been generated twice")
 	}
-	fmt.Println("TestKademlia2: EXIT!\n ")
+	fmt.Println("TestKademlia_RandomID: EXIT!\n ")
+}
+
+func TestKademlia_STORE(t *testing.T) {
+	kademlia4 := NewKademlia(NewContact(NewKademliaID("ffffffff00000000000000000000000000000000"), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
+		rand.Seed(time.Now().UnixNano())
+		N := rand.Intn(10)
+		testBytes := make([]byte, N)
+		for i := 0; i < N; i++ {
+			testBytes[i] = 'a' + byte(i%26)
+		}
+		rec := kademlia4.dataStore.Store(testBytes, kademlia4.rt.me, time.Now())
+		fmt.Printf("iterativestore on rec: %v", rec)
+		kademlia4.IterativeStore(GetKey(testBytes), true)
+}
+
+func TestKademlia_FIND_VALUE(t *testing.T) {
+
+}
+func TestKademlia_FIND_NODE(t *testing.T) {
+
+}
+func TestKademlia_PING(t *testing.T) {
+
+}
+func TestKademlia_FetchFile(t *testing.T) {
+
+}
+func TestKademlia_IterativeFindNode(t *testing.T) {
+
+}
+func TestKademlia_IterativeFindValue(t *testing.T) {
+
+}
+func TestKademlia_IterativeStore(t *testing.T) {
+
+}
+func TestKademlia_StartScheduler(t *testing.T) {
+
 }
