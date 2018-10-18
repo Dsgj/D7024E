@@ -3,12 +3,15 @@ package dht
 import (
 	"encoding/hex"
 	"fmt"
+	//"io/ioutil" 	//toggle log show/hide
+	//"log"			//toggle log show/hide
 	"math/rand"
 	"testing"
 	"time"
 )
 
 func TestKademlia(t *testing.T) {
+	//log.SetOutput(ioutil.Discard) //toggle log show/hide
 	fmt.Println("TestKademlia: ENTER!")
 
 	//creates a new instance of Kademlia
