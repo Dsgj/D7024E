@@ -46,9 +46,21 @@ func storeFile(w http.ResponseWriter, r *http.Request, k *dht.Kademlia) {
 }
 
 func pinFile(w http.ResponseWriter, r *http.Request, k *dht.Kademlia) {
-	w.Write([]byte("pin file"))
+	key := chi.URLParam(r, "key")
+	err := k.PinFile(key)
+	if err != nil {
+		http.Error(w, http.StatusText(404), 404)
+		return
+	}
+	w.Write([]byte("file pinned"))
 }
 
 func unpinFile(w http.ResponseWriter, r *http.Request, k *dht.Kademlia) {
-	w.Write([]byte("unpin file"))
+	key := chi.URLParam(r, "key")
+	err := k.UnpinFile(key)
+	if err != nil {
+		http.Error(w, http.StatusText(404), 404)
+		return
+	}
+	w.Write([]byte("file unpinned"))
 }

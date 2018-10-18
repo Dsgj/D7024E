@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -78,26 +79,24 @@ func (s *Store) DelRecord(key [20]byte) {
 	}
 }
 
-func (s *Store) PinRecord(key [20]byte) {
+func (s *Store) PinRecord(key [20]byte) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if record, exists := s.records[key]; exists {
 		record.pinned = true
-		log.Printf("Pinned record: %s", ToString(key))
-	} else {
-		log.Printf("No record found for key: %s", ToString(key))
+		return nil
 	}
+	return fmt.Errorf("No record found for key: %s", ToString(key))
 }
 
-func (s *Store) UnpinRecord(key [20]byte) {
+func (s *Store) UnpinRecord(key [20]byte) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if record, exists := s.records[key]; exists {
 		record.pinned = false
-		log.Printf("Unpinned record: %s", ToString(key))
-	} else {
-		log.Printf("No record found for key: %s", ToString(key))
+		return nil
 	}
+	return fmt.Errorf("No record found for key: %s", ToString(key))
 }
 
 func (s *Store) SendableRecord(key [20]byte, newPublish bool) *pb.Record {

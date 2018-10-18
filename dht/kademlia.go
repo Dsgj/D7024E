@@ -396,6 +396,32 @@ func (k *Kademlia) FetchFile(key string) []byte {
 	return nil
 }
 
+func (k *Kademlia) PinFile(key string) error {
+	log.Printf("(PinFile) key: %s", key)
+	keyBytes, err := FromString(key)
+	if err != nil {
+		return err
+	}
+	err = k.dataStore.PinRecord(keyBytes)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (k *Kademlia) UnpinFile(key string) error {
+	log.Printf("(UnpinFile) key: %s", key)
+	keyBytes, err := FromString(key)
+	if err != nil {
+		return err
+	}
+	err = k.dataStore.UnpinRecord(keyBytes)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k *Kademlia) TestStore() { //manual testing
 	rand.Seed(time.Now().UnixNano())
 	N := rand.Intn(10)

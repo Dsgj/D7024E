@@ -72,6 +72,60 @@ func main() {
 				return nil
 			},
 		},
+		{
+			Name:  "pin",
+			Usage: "pins a file to prevent it from expiring",
+			Action: func(c *cli.Context) error {
+				// should probably validate key
+				key := c.Args().Get(0)
+				// PATCH request
+				resp, err := resty.R().SetPathParams(map[string]string{
+					"key": key,
+				}).Patch("http://localhost:3000/files/{key}/pin")
+
+				if err != nil {
+					fmt.Printf("\nError: %v", err)
+					return err
+				}
+				if resp.StatusCode() != 200 {
+					fmt.Printf("\nResponse Status Code: %v", resp.StatusCode())
+					fmt.Printf("\nResponse Status: %v", resp.Status())
+					fmt.Printf("\nResponse Time: %v", resp.Time())
+					fmt.Printf("\nResponse Received At: %v", resp.ReceivedAt())
+					fmt.Printf("\nResponse Body:%v\n", resp)
+				} else {
+					fmt.Printf("\n%v\n", resp)
+				}
+				return nil
+			},
+		},
+		{
+			Name:  "unpin",
+			Usage: "unpins a file so that it can expire (default behavior)",
+			Action: func(c *cli.Context) error {
+				// should probably validate key
+				key := c.Args().Get(0)
+				// PATCH request
+				resp, err := resty.R().SetPathParams(map[string]string{
+					"key": key,
+				}).Patch("http://localhost:3000/files/{key}/unpin")
+
+				if err != nil {
+					fmt.Printf("\nError: %v", err)
+					return err
+				}
+				if resp.StatusCode() != 200 {
+					fmt.Printf("\nResponse Status Code: %v", resp.StatusCode())
+					fmt.Printf("\nResponse Status: %v", resp.Status())
+					fmt.Printf("\nResponse Time: %v", resp.Time())
+					fmt.Printf("\nResponse Received At: %v", resp.ReceivedAt())
+					fmt.Printf("\nResponse Body:%v\n", resp)
+				} else {
+					fmt.Printf("\n%v\n", resp)
+				}
+				return nil
+			},
+		},
 	}
 
 	err := app.Run(os.Args)
