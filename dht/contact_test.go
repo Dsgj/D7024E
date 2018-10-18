@@ -17,27 +17,55 @@ func TestContact(t *testing.T) {
 
 func TestcontactToPeer(t *testing.T) {
 		
-	contact := NewContact(NewKademliaID("ffffffff00000000000000000000000000000000"), "192.169.0.0")
+	id := "ffffffff00000000000000000000000000000000"
+	ip := "192.169.0.0"
 	
-	_ = ContactToPeer(contact)
+	contact := NewContact(NewKademliaID(id), ip)
 	
-	//Sets the distance for that contact
-	contact.distance = NewKademliaID("1000000000000000000000000000000000000000")
+	peer := ContactToPeer(contact)
 	
-	//Calls the method again but now the distance is set
-	_ = ContactToPeer(contact)
+	if peer.Id != id {
+		t.Errorf("peer.Id was incorrect, got: %s, want: %s.", peer.Id, id)
+	}
+	if peer.Addr != ip {
+		t.Errorf("peer.Addr was incorrect, got: %s, want: %s.", peer.Addr, ip)
+	}
+	if peer.Distance != "" {
+		t.Errorf("peer.Distance was incorrect, got: %s, want: %s.", peer.Distance, "")
+	}
+	
+	distance := NewRandomKademliaID()
+	
+	contact.distance = distance
+	
+	peer = ContactToPeer(contact)
+	
+	if peer.Distance != distance.String() {
+		t.Errorf("peer.Distance was incorrect, got: %s, want: %s.", peer.Distance, distance.String())
+	}
 
 }
 
 func TestpeerToContact(t *testing.T) {
 	
-	contact := NewContact(NewKademliaID("fffffff000000000000000000000000000000000"), "192.169.0.0")
+	id := "ffffffff00000000000000000000000000000000"
+	ip := "192.169.0.0"
 	
-	contact.distance = NewKademliaID("1000000000000000000000000000000000000000")
+	contact1 := NewContact(NewKademliaID(id), ip)
 	
-	peer := ContactToPeer(contact)
+	peer := ContactToPeer(contact1)
 	
-	_ = PeerToContact(peer)
+	contact2 := PeerToContact(peer)
+	
+	if contact1.ID.String() != contact2.ID.String() {
+		t.Errorf("contact2.ID was incorrect, got: %s, want: %s.", contact2.ID, contact1.ID)
+	}
+	if contact1.Address != contact2.Address {
+		t.Errorf("contact2.Address was incorrect, got: %s, want: %s.", contact2.Address, contact1.Address)
+	}
+	if contact1.distance != contact2.distance {
+		t.Errorf("contact2.distance was incorrect, got: %s, want: %s.", contact2.distance, contact1.distance)
+	}
 }
 
 func TestcontactsToPeers(t *testing.T) {
