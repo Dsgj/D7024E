@@ -16,6 +16,7 @@ const (
 	port          = "8080"
 	bootstrapID   = "210fc7bb818639ac48a4c6afa2f1581a8b9525e3"
 	bootstrapAddr = "10.0.0.4"
+	bootstrapPort = "8060"
 )
 
 func main() {
@@ -30,8 +31,13 @@ func main() {
 	fmt.Println(status)
 	// take ip from args for now
 	ip := os.Args[1]
-	me := getSelf(ip)
-	k := d.NewKademlia(me, port)
+	me := getSelf(ip, port)
+	var k *d.Kademlia
+	if ip != bootstrapAddr {
+		k = d.NewKademlia(me, port)
+	} else {
+		k = d.NewKademlia(me, bootstrapPort)
+	}
 
 	// init listener/conn
 	k.InitConn()
@@ -47,7 +53,7 @@ func main() {
 }
 
 func bootstrap(k *d.Kademlia, me d.Contact) {
-	bs := d.NewContact(d.NewKademliaID(bootstrapID), bootstrapAddr)
+	bs := d.NewContact(d.NewKademliaID(bootstrapID), bootstrapAddr+":"+bootstrapPort)
 	k.Update(bs)
 	closestContacts, err := k.IterativeFindNode(me.ID.String())
 	if err != nil {
@@ -65,12 +71,12 @@ func bootstrap(k *d.Kademlia, me d.Contact) {
 
 }
 
-func getSelf(ip string) d.Contact {
+func getSelf(ip, port string) d.Contact {
 	if ip == bootstrapAddr { // im the bootstrapnode (this is bad, but works)
 		log.Printf("I'm the bootstrap node\n")
-		return d.NewContact(d.NewKademliaID(bootstrapID), ip)
+		return d.NewContact(d.NewKademliaID(bootstrapID), ip+":"+bootstrapPort)
 	} else {
 		id := d.NewRandomKademliaID()
-		return d.NewContact(id, ip)
+		return d.NewContact(id, ip+":"+port)
 	}
 }

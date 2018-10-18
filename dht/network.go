@@ -118,7 +118,7 @@ func (n *Network) SendRequest(c *Contact, msg *pb.Message,
 
 func (n *Network) SendMessage(c *Contact,
 	msg *pb.Message) error {
-	remoteAddr, err := net.ResolveUDPAddr("udp", c.Address+":"+n.port)
+	remoteAddr, err := net.ResolveUDPAddr("udp", c.Address)
 	if err != nil {
 		return err
 	}
