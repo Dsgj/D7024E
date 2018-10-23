@@ -32,7 +32,7 @@ func TestStore(t *testing.T) {
 		}
 	}
 	if rec.publisher != contacts[1] {
-		t.Errorf("Store stored the wrong publisher. Stored %d. Should store: %d.\n", rec.publisher, contacts[1])
+		t.Errorf("Store stored the wrong publisher. Stored %v. Should store: %v.\n", rec.publisher, contacts[1])
 	}
 	
 }
