@@ -48,7 +48,7 @@ func (bucket *bucket) AddContact(contact Contact) {
 		}
 	} else {
 		bucket.list.MoveToFront(element)
-		//log.Printf("moved contact to front of bucket: %+v\n", contact)
+		log.Printf("moved contact to front of bucket: %+v\n", contact)
 	}
 }
 
