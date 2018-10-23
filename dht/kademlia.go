@@ -446,15 +446,3 @@ func (k *Kademlia) TestStore() { //manual testing
 	log.Printf("iterativestore on rec: %v", rec)
 	k.IterativeStore(GetKey(testBytes), true)
 }
-
-func (kademlia *Kademlia) LookupContact(target *Contact) {
-	// TODO
-}
-
-func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO
-}
-
-func (kademlia *Kademlia) Store(data []byte) {
-	// TODO
-}

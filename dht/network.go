@@ -193,24 +193,3 @@ func (k *Kademlia) updateContacts(msg *pb.Message) {
 	}
 
 }
-
-// Dont use these. Instead, create a message in msgFct and send it using SendMessage
-func (n *Network) SendPingMessage(tar, me *Contact, reqID int32) error {
-	// TODO
-	return nil
-}
-
-func (n *Network) SendFindContactMessage(c *Contact) error {
-	// TODO
-	return nil
-}
-
-func (n *Network) SendFindDataMessage(hash string) error {
-	// TODO
-	return nil
-}
-
-func (n *Network) SendStoreMessage(data []byte) error {
-	// TODO
-	return nil
-}
