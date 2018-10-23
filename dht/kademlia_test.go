@@ -13,12 +13,9 @@ import (
 
 func TestKademlia(t *testing.T) {
 	log.SetOutput(ioutil.Discard) //toggle log show/hide
-	fmt.Println("TestKademlia: ENTER!")
 
 	//creates a new instance of Kademlia
 	kademlia1 := NewKademlia(NewContact(NewKademliaID("ffffffff00000000000000000000000000000000"), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
-
-	fmt.Println("Set Port: " + kademlia1.netw.port)
 
 	//checks if the port is set
 	if kademlia1.netw.port != "1337" {
@@ -43,8 +40,6 @@ func TestKademlia(t *testing.T) {
 	TestnewRequest(t, *kademlia1)
 
 	Testupdate(t, *kademlia1)
-
-	fmt.Println("TestKademlia: EXIT!\n ")
 }
 
 func TestnewRequest(t *testing.T, kademlia1 Kademlia) {
@@ -90,12 +85,10 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 }
 
 func TestKademlia_RandomID(t *testing.T) {
-	fmt.Println("TestKademlia_RandomID: ENTER!")
 	//creates a new instance of Kademlia
 	kademlia3 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
 	time.Sleep(time.Millisecond * 2)
 	kademlia2 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337")
-	fmt.Println("Randomized KademliaID: ", kademlia3.rt.me.ID)
 
 	//checks if the port is set
 	if kademlia3.netw.port != "1337" {
@@ -108,12 +101,9 @@ func TestKademlia_RandomID(t *testing.T) {
 	}
 
 	//checks if the randomized ID is unique
-	fmt.Println("Randomized Kademlia3: ", kademlia3.rt.me.ID)
-	fmt.Println("Randomized Kademlia2: ", kademlia2.rt.me.ID)
 	if *kademlia3.rt.me.ID == *kademlia2.rt.me.ID {
 		t.Errorf("The ID has been generated twice")
 	}
-	fmt.Println("TestKademlia_RandomID: EXIT!\n ")
 }
 
 func TestKademlia_STORE(t *testing.T) {
@@ -125,36 +115,13 @@ func TestKademlia_STORE(t *testing.T) {
 		testBytes[i] = 'a' + byte(i%26)
 	}
 	rec := kademlia4.dataStore.Store(testBytes, kademlia4.rt.me, time.Now())
-	fmt.Printf("iterativestore on rec: %v", rec)
 	kademlia4.IterativeStore(GetKey(testBytes), true)
+	fmt.Printf("iterativestore on rec: %v \n", rec)
 }
 
 func TestKademlia_FIND_VALUE(t *testing.T) {
-
 }
 func TestKademlia_FIND_NODE(t *testing.T) {
-	
-	contacts, kademlias, teardown := setupTestCase(t, 20)
-	
-	defer teardown(t)
-	
-	respMsg, err, timeout := kademlias[0].FIND_NODE(contacts[10], contacts[19].ID.String())
-	
-	if err != nil {
-		t.Errorf("FIND_NODE had an error: %d.\n", err)	
-	}
-	if timeout {
-		t.Errorf("FIND_NODE got timeout!")	
-	}
-	
-	externContacts := respMsg
-	internContacts := kademlias[10].rt.FindClosestContacts(contacts[19].ID, 20, contacts[0])
-	
-	for i := 0; i < 19; i++ {
-		if !externContacts[i].ID.Equals(internContacts[i].ID) {
-			t.Errorf("FIND_NODE was incorrect, got: %d, want: %d. \n", externContacts[i].ID, internContacts[i].ID)
-		}
-	}
 
 }
 func TestKademlia_PING(t *testing.T) {
@@ -190,11 +157,11 @@ func TestPingRPC(t *testing.T) {
 
 	sender := PeerToContact(respMsg.GetSender())
 	if !sender.Equals(&contacts[5]) {
-		t.Errorf("sender of ping response is incorrect, expected: %v, got: %v",
+		t.Errorf("sender of ping response is incorrect, expected: %v, got: %v \n",
 			contacts[5], sender)
 	}
 	if respMsg.GetType() != pb.Message_PING {
-		t.Errorf("type of message is incorrect, expected: %s, got: %s",
+		t.Errorf("type of message is incorrect, expected: %s, got: %s \n",
 			pb.Message_PING, respMsg.GetType())
 	}
 }
