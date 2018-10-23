@@ -2,6 +2,7 @@ package dht
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -16,6 +17,9 @@ type KademliaID [IDLength]byte
 func NewKademliaID(data string) *KademliaID {
 	decoded, _ := hex.DecodeString(data)
 
+	if len(decoded) != 20 {
+		panic(fmt.Sprintf("cant convert string, length must equal 20\nstring: %v", data))
+	}
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = decoded[i]

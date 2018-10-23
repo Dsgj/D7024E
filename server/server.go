@@ -45,8 +45,8 @@ func main() {
 
 	if ip != bootstrapAddr {
 		bootstrap(k, me)
+		k.StartScheduler()
 	}
-	k.StartScheduler()
 	r := chi.NewRouter()
 	api.Routes(r, k)
 	http.ListenAndServe(":3000", r)

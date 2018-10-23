@@ -68,7 +68,7 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 	 */
 
 	index2 := kademlia1.rt.getBucketIndex(NewKademliaID("ffffffff00000000000000000000000000000000"))
-	fmt.Println(index2)
+	//fmt.Println(index2)
 	lenOfBucket3 := kademlia1.rt.buckets[index2].Len()
 	kademlia1.Update(NewContact(NewKademliaID("ffffffff00000000000000000000000000000000"), "localhost:8000"))
 	lenOfBucket4 := kademlia1.rt.buckets[index2].Len()

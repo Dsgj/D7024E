@@ -95,10 +95,13 @@ func (k *Kademlia) STORE(c Contact, rec *Record, publish bool) error {
 	sender := ContactToPeer(k.rt.me)
 	key := c.ID.String()
 	msg := k.netw.msgFct.NewStoreMessage(reqID, key, sender, receiver, false)
-	msg.AddRecord(k.dataStore.SendableRecord(GetKey(rec.value), publish))
-	err := k.netw.SendMessage(&c, msg)
-	if err != nil {
-		return err
+	sendableRec := k.dataStore.SendableRecord(GetKey(rec.value), publish)
+	if sendableRec != nil {
+		msg.AddRecord(sendableRec)
+		err := k.netw.SendMessage(&c, msg)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -404,6 +407,16 @@ func (k *Kademlia) FetchFile(key string) []byte {
 	if exists {
 		log.Printf("(FetchFile) found value: %s", rec.value)
 		return rec.value
+	} else {
+		value, _, err := k.IterativeFindValue(key)
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+		if value != nil {
+			log.Printf("(FetchFile) found value: %s", value)
+			return value
+		}
 	}
 	log.Printf("(FetchFile) value not found")
 	return nil
