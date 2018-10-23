@@ -1,7 +1,7 @@
 package dht
 
 import (
-	pb "D7024E/dht/pb"
+	"D7024E/dht/pb"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil" //toggle log show/hide
@@ -42,14 +42,12 @@ func TestKademlia(t *testing.T) {
 
 	Testupdate(t, *kademlia1)
 }
-
 func TestnewRequest(t *testing.T, kademlia1 Kademlia) {
 	requestID := kademlia1.newRequest()
 	if kademlia1.reqCount != requestID+1 {
 		t.Errorf("Request count was incorrect, is: %d, should be: %d.\n", kademlia1.reqCount, requestID+1)
 	}
 }
-
 func Testupdate(t *testing.T, kademlia1 Kademlia) {
 
 	/* Checks at witch bucket index a kademliaID would be stored at, and saves the length of that bucket.
@@ -82,9 +80,7 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 	if lenOfBucket1 != lenOfBucket2 {
 		t.Errorf("Kademlia.Update() did let a node add itself. \n")
 	}
-
 }
-
 func TestKademlia_RandomID(t *testing.T) {
 	//creates a new instance of Kademlia
 	kademlia3 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
@@ -106,13 +102,12 @@ func TestKademlia_RandomID(t *testing.T) {
 		t.Errorf("The ID has been generated twice")
 	}
 }
-
 func TestKademlia_STORE(t *testing.T) {
-	
+
 	contacts, kademlias, teardown := setupTestCase(t, 20)
-	
+
 	defer teardown(t)
-	
+
 	rand.Seed(time.Now().UnixNano())
 	N := rand.Intn(9)
 	N += 1
@@ -120,40 +115,39 @@ func TestKademlia_STORE(t *testing.T) {
 	for i := 0; i < N; i++ {
 		testBytes[i] = 'a' + byte(i%26)
 	}
-	
+
 	rec := kademlias[0].dataStore.Store(testBytes, kademlias[0].rt.me, time.Now())
 
 	err := kademlias[0].STORE(contacts[1], rec, true)
-	
+
 	if err != nil {
 		t.Errorf("STORE genereted an error: %d.\n", err)
 	}
-	
+
 	time.Sleep(time.Millisecond * 2)
-	
+
 	value, _, err, timeout := kademlias[0].FIND_VALUE(contacts[1], ToString(GetKey(testBytes)))
-	
+
 	if timeout {
 		t.Errorf("FIND_VALUE in test function for STORE got a timeout!")
 	}
 	if err != nil {
 		t.Errorf("FIND_VALUE in test function for STORE generated error: %d.\n", err)
 	}
-	
+
 	for i := 0; i < len(value); i++ {
 		if value[i] != testBytes[i] {
 			t.Errorf("STORE stored the wrong value! Wanted to store: %d. Stored: %d.\n", testBytes, value)
 		}
 	}
-	
-}
 
+}
 func TestKademlia_FIND_VALUE(t *testing.T) {
-	
+
 	contacts, kademlias, teardown := setupTestCase(t, 20)
-	
+
 	defer teardown(t)
-	
+
 	rand.Seed(time.Now().UnixNano())
 	N := rand.Intn(9)
 	N += 1
@@ -161,34 +155,34 @@ func TestKademlia_FIND_VALUE(t *testing.T) {
 	for i := 0; i < N; i++ {
 		testValue[i] = 'a' + byte(i%26)
 	}
-	
+
 	rec := kademlias[0].dataStore.Store(testValue, kademlias[0].rt.me, time.Now())
 
 	err := kademlias[0].STORE(contacts[1], rec, true)
-	
+
 	if err != nil {
 		t.Errorf("STORE in test for FIND_NODE genereted an error: %d.\n", err)
 	}
-	
+
 	time.Sleep(time.Millisecond * 2)
-	
+
 	//Tries to get the value from a different node than the one that stored it
 	_, closestContacts, _, _ := kademlias[0].FIND_VALUE(contacts[2], ToString(GetKey(testValue)))
 
 	if closestContacts == nil {
 		t.Errorf("FIND_VALUE did not return closest contacts.")
 	}
-	
+
 	//Tries to get the value from the node that we stored it in
 	value, _, err, timeout := kademlias[0].FIND_VALUE(contacts[1], ToString(GetKey(testValue)))
-	
+
 	if timeout {
 		t.Errorf("FIND_VALUE in test function for FIND_VALUE got a timeout!")
 	}
 	if err != nil {
 		t.Errorf("FIND_VALUE in test function for FIND_VALUE generated error: %d.\n", err)
 	}
-	
+
 	for i := 0; i < len(value); i++ {
 		if value[i] != testValue[i] {
 			t.Errorf("FIND_VALUE returned the wrong value! Wanted: %d. Got: %d.\n", testValue, value)
@@ -198,16 +192,37 @@ func TestKademlia_FIND_VALUE(t *testing.T) {
 }
 func TestKademlia_FIND_NODE(t *testing.T) {
 
+	contacts, kademlias, teardown := setupTestCase(t, 20)
+
+	defer teardown(t)
+
+	respMsg, err, timeout := kademlias[0].FIND_NODE(contacts[10], contacts[19].ID.String())
+
+	if err != nil {
+		t.Errorf("FIND_NODE had an error: %d.\n", err)
+	}
+	if timeout {
+		t.Errorf("FIND_NODE got timeout!")
+	}
+
+	externContacts := respMsg
+	internContacts := kademlias[10].rt.FindClosestContacts(contacts[19].ID, 20, contacts[0])
+
+	for i := 0; i < 19; i++ {
+		if !externContacts[i].ID.Equals(internContacts[i].ID) {
+			t.Errorf("FIND_NODE was incorrect, got: %d, want: %d. \n", externContacts[i].ID, internContacts[i].ID)
+		}
+	}
 }
 func TestKademlia_PING(t *testing.T) {
 
 }
 func TestKademlia_FetchFile(t *testing.T) {
-	
+
 	_, kademlias, teardown := setupTestCase(t, 2)
-	
+
 	defer teardown(t)
-	
+
 	rand.Seed(time.Now().UnixNano())
 	N := rand.Intn(9)
 	N += 1
@@ -215,30 +230,30 @@ func TestKademlia_FetchFile(t *testing.T) {
 	for i := 0; i < N; i++ {
 		testValue[i] = 'a' + byte(i%26)
 	}
-	
+
 	kademlias[0].dataStore.Store(testValue, kademlias[0].rt.me, time.Now())
-	
+
 	file := kademlias[0].FetchFile(ToString(GetKey(testValue)))
-	
+
 	if file == nil {
 		t.Errorf("FetchFile did not find the file!")
 	}
 
 	file2 := kademlias[1].FetchFile(ToString(GetKey(testValue)))
-	
+
 	if file2 != nil {
 		t.Errorf("FetchFile did generate an error or found a file that was stored: %d.\n", file2)
 	}
 
 }
 func TestKademlia_IterativeFindNode(t *testing.T) {
-	
-	//_, kademlias, teardown := setupTestCase(t, 3)
-	
-	//defer teardown(t)
-	
-	//fmt.Println(kademlias[0].IterativeFindNode(kademlias[2].rt.me.ID.String()))
-	//fmt.Println(kademlias[2].netw.addr)
+
+	_, kademlias, teardown := setupTestCase(t, 3)
+
+	defer teardown(t)
+
+	fmt.Println(kademlias[0].IterativeFindNode(kademlias[2].rt.me.ID.String()))
+	fmt.Println(kademlias[2].netw.addr)
 }
 func TestKademlia_IterativeFindValue(t *testing.T) {
 
@@ -250,11 +265,11 @@ func TestKademlia_StartScheduler(t *testing.T) {
 
 }
 func TestKademlia_PinFile(t *testing.T) {
-	
+
 	_, kademlias, teardown := setupTestCase(t, 2)
-	
+
 	defer teardown(t)
-	
+
 	rand.Seed(time.Now().UnixNano())
 	N := rand.Intn(9)
 	N += 1
@@ -262,29 +277,28 @@ func TestKademlia_PinFile(t *testing.T) {
 	for i := 0; i < N; i++ {
 		testValue[i] = 'a' + byte(i%26)
 	}
-	
+
 	rec := kademlias[0].dataStore.Store(testValue, kademlias[0].rt.me, time.Now())
-	
+
 	kademlias[0].PinFile(ToString(GetKey(testValue)))
-	
+
 	if !rec.pinned {
 		t.Errorf("PinFile did not pin the file!")
 	}
-	
+
 	err := kademlias[1].PinFile(ToString(GetKey(testValue)))
-	
+
 	if err == nil {
 		t.Errorf("PinFile did not generate an error when trying to pin a file that was not stored!")
 	}
-	
-}
 
+}
 func TestKademlia_UnpinFile(t *testing.T) {
-	
+
 	_, kademlias, teardown := setupTestCase(t, 2)
-	
+
 	defer teardown(t)
-	
+
 	rand.Seed(time.Now().UnixNano())
 	N := rand.Intn(9)
 	N += 1
@@ -292,30 +306,29 @@ func TestKademlia_UnpinFile(t *testing.T) {
 	for i := 0; i < N; i++ {
 		testValue[i] = 'a' + byte(i%26)
 	}
-	
+
 	rec := kademlias[0].dataStore.Store(testValue, kademlias[0].rt.me, time.Now())
-	
+
 	kademlias[0].PinFile(ToString(GetKey(testValue)))
-	
+
 	if rec.pinned {
 
 		kademlias[0].UnpinFile(ToString(GetKey(testValue)))
-		
+
 		if rec.pinned {
 			t.Errorf("UnpinFile file did not unpin the file!")
 		}
 	} else {
 		t.Errorf("PinFile in the test for Unpinfile did not work!")
 	}
-	
+
 	err := kademlias[1].UnpinFile(ToString(GetKey(testValue)))
-	
+
 	if err == nil {
 		t.Errorf("UnpinFile did not generate an error when trying to unpin a file that was not stored!")
 	}
-	
-}
 
+}
 func TestPingRPC(t *testing.T) {
 	contacts, kademlias, teardown := setupTestCase(t, 20)
 	defer teardown(t)
@@ -338,7 +351,6 @@ func TestPingRPC(t *testing.T) {
 			pb.Message_PING, respMsg.GetType())
 	}
 }
-
 func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	if num < 1 {
 		return nil, nil
@@ -361,7 +373,6 @@ func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	}
 	return contacts, kademlias
 }
-
 func setupTestCase(t *testing.T, num int) ([]Contact, []*Kademlia, func(t *testing.T)) {
 	t.Log("setup test case")
 	c, k := InitKademlias(num)
