@@ -417,7 +417,7 @@ func TestPingRPC(t *testing.T) {
 	if timeout {
 		t.Errorf("ping timed out")
 	}
-	fmt.Printf("ping response msg: %v\n", respMsg)
+	//fmt.Printf("ping response msg: %v\n", respMsg)
 
 	sender := PeerToContact(respMsg.GetSender())
 	if !sender.Equals(&contacts[5]) {

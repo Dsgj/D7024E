@@ -1,7 +1,7 @@
 package dht
 
 import (
-	"fmt"
+	//"fmt"
 	"testing"
 )
 
@@ -73,7 +73,7 @@ func TestPeersToContacts(t *testing.T) {
 	//This tests the function Add in contact
 	candidates := ContactCandidates{contacts}
 	candidates.Add(contact)
-	fmt.Println(candidates)
+	//fmt.Println(candidates)
 
 	//This tests remove
 	candidates.Remove(1)
@@ -91,5 +91,5 @@ func TestPeersToContacts(t *testing.T) {
 	candidates.AddUnique(contacts)
 	contacts = append(contacts, contactUnique)
 	candidates.AddUnique(contacts)
-	fmt.Println(contacts)
+	//fmt.Println(contacts)
 }
