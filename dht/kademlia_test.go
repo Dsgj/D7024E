@@ -195,29 +195,4 @@ func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	contacts := make([]Contact, 0)
 	for i := 0; i < num; i++ {
 		id := NewRandomKademliaID()
-		contacts = append(contacts, NewContact(id, "localhost:500"+fmt.Sprintf("%d", i)))
-		time.Sleep(time.Millisecond * 2)
-	}
-	kademlias := make([]*Kademlia, 0)
-	for i := 0; i < num; i++ {
-		k := NewKademlia(contacts[0], "500"+fmt.Sprintf("%d", i))
-		k.InitConn()
-		go Listen(k)
-		for _, c := range contacts {
-			k.Update(c)
-		}
-		kademlias = append(kademlias, k)
-	}
-	return contacts, kademlias
-}
-
-func setupTestCase(t *testing.T, num int) ([]Contact, []*Kademlia, func(t *testing.T)) {
-	t.Log("setup test case")
-	c, k := InitKademlias(num)
-	return c, k, func(t *testing.T) {
-		t.Log("teardown test case")
-		for _, kad := range k {
-			kad.CloseConn()
-		}
-	}
-}
+		contacts = append(contacts, NewContact(
