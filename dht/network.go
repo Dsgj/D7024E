@@ -96,10 +96,11 @@ func (k *Kademlia) read(buf []byte) {
 		return
 	}
 	if msg.Response {
-		log.Printf("Received response: reqID: %d type: %s sent at %s from %s",
+		log.Printf("Received response:\t reqID: %-5d type: %-12s %-6s %s sent at: %s",
 			msg.GetRequestID(),
 			msg.GetType(),
-			time.Unix(msg.GetSentTime(), 0), addr)
+			"from:",
+			addr, time.Unix(msg.GetSentTime(), 0))
 		reqID := msg.GetRequestID()
 		network.rMapLck.Lock()
 		returnCh, exists := network.requestMap[reqID]
@@ -111,10 +112,11 @@ func (k *Kademlia) read(buf []byte) {
 		network.rMapLck.Unlock()
 	} else {
 		go k.handleMessage(msg)
-		log.Printf("Received request: reqID: %d type: %s sent at %s from %s",
+		log.Printf("Received request:\t reqID: %-5d type: %-12s %-6s %s sent at: %s",
 			msg.GetRequestID(),
 			msg.GetType(),
-			time.Unix(msg.GetSentTime(), 0), addr)
+			"from:",
+			addr, time.Unix(msg.GetSentTime(), 0))
 	}
 	go k.updateContacts(msg)
 }
@@ -146,14 +148,16 @@ func (n *Network) SendMessage(c *Contact,
 		return err
 	}
 	if msg.Response {
-		log.Printf("Sent response: reqID: %d type: %s to %s",
+		log.Printf("Sent response:\t reqID: %-5d type: %-12s %-6s %s",
 			msg.GetRequestID(),
 			msg.GetType(),
+			"to:",
 			c.Address)
 	} else {
-		log.Printf("Sent request: reqID: %d type: %s to %s",
+		log.Printf("Sent request:\t reqID: %-5d type: %-12s %-6s %s",
 			msg.GetRequestID(),
 			msg.GetType(),
+			"to:",
 			c.Address)
 	}
 
@@ -188,25 +192,4 @@ func (k *Kademlia) updateContacts(msg *pb.Message) {
 		k.Update(PeerToContact(msg.GetSender()))
 	}
 
-}
-
-// Dont use these. Instead, create a message in msgFct and send it using SendMessage
-func (n *Network) SendPingMessage(tar, me *Contact, reqID int32) error {
-	// TODO
-	return nil
-}
-
-func (n *Network) SendFindContactMessage(c *Contact) error {
-	// TODO
-	return nil
-}
-
-func (n *Network) SendFindDataMessage(hash string) error {
-	// TODO
-	return nil
-}
-
-func (n *Network) SendStoreMessage(data []byte) error {
-	// TODO
-	return nil
 }

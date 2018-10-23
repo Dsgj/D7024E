@@ -87,12 +87,12 @@ func (bucket *bucket) Refresh(t time.Time) {
 
 func (bucket *bucket) GetRandomContact() *Contact {
 	bucket.mutex.Lock()
+	defer bucket.mutex.Unlock()
 	if bucket.Len() == 0 {
 		return nil
 	}
-	defer bucket.mutex.Unlock()
 	rand.Seed(time.Now().UnixNano())
-	index := rand.Intn(bucket.Len()) - 1
+	index := rand.Intn(bucket.Len())
 	j := 0
 	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
 		if j == index {
