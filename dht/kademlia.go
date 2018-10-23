@@ -132,6 +132,10 @@ func (k *Kademlia) FIND_VALUE(recipient Contact,
 }
 
 func (k *Kademlia) IterativeStore(key [20]byte, publish bool) {
+	log.Printf("START: IterativeStore for key: %v", ToString(key))
+	defer func() {
+		log.Printf("END: IterativeStore for key: %v", ToString(key))
+	}()
 	rec, exists := k.dataStore.GetRecord(key)
 	if !exists {
 		log.Printf("record not found for key: %+v\n", key)
@@ -152,8 +156,11 @@ func (k *Kademlia) IterativeStore(key [20]byte, publish bool) {
 }
 
 func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
+	log.Printf("START: IterativeFindNode for key: %v", key)
+	defer func() {
+		log.Printf("END: IterativeFindNode for key: %v", key)
+	}()
 	toBeQueried := k.rt.FindClosestContacts(NewKademliaID(key), 20, k.rt.me)
-	log.Printf("to be queried: %+v\n", toBeQueried)
 	alreadyQueried := make(map[*KademliaID]bool)
 	shortList := &ContactCandidates{}
 
@@ -171,7 +178,7 @@ func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
 				}
 			}
 		}
-		log.Printf("current shortlist: %+v\n", shortList)
+		//log.Printf("current shortlist: %+v\n", shortList)
 		if countNodesToQuery == 0 { // we queried all nodes
 			shortList.Sort()
 			shortList.Cut()
@@ -186,8 +193,11 @@ func (k *Kademlia) IterativeFindNode(key string) ([]Contact, error) {
 }
 
 func (k *Kademlia) IterativeFindValue(key string) ([]byte, []Contact, error) {
+	log.Printf("START: IterativeFindValue for key: %v", key)
+	defer func() {
+		log.Printf("END: IterativeFindValue for key: %v", key)
+	}()
 	toBeQueried := k.rt.FindClosestContacts(NewKademliaID(key), 20, k.rt.me)
-	log.Printf("to be queried: %+v\n", toBeQueried)
 	alreadyQueried := make(map[*KademliaID]bool)
 	shortList := &ContactCandidates{}
 	var value []byte
@@ -206,7 +216,7 @@ func (k *Kademlia) IterativeFindValue(key string) ([]byte, []Contact, error) {
 				}
 			}
 		}
-		log.Printf("current shortlist: %+v\n", shortList)
+		//log.Printf("current shortlist: %+v\n", shortList)
 		if countNodesToQuery == 0 { // we queried all nodes
 			shortList.Sort()
 			shortList.Cut()
@@ -232,7 +242,7 @@ func (k *Kademlia) findCloserNodesOrValue(shortList *ContactCandidates,
 	closestContact := shortList.contacts[0]
 	pending := 0
 	countNoCloserNodes := 0
-	log.Printf("finding closer nodes, shortlist: %+v\n", shortList)
+	//log.Printf("finding closer nodes, shortlist: %+v\n", shortList)
 	for {
 		select {
 		case value := <-valueCh:
@@ -339,13 +349,13 @@ func (k *Kademlia) StartScheduler() {
 				contact := bucket.GetRandomContact()
 				if contact != nil {
 					bucket.Refresh(time.Now())
-					log.Printf("refreshing bucket: %d", i)
+					log.Printf("SCHEDULER: refreshing bucket: %d", i)
 					go func(i int) {
 						_, err := k.IterativeFindNode(contact.ID.String())
 						if err != nil {
 							log.Println(err)
 						} else {
-							log.Printf("bucket refreshed: %v", i)
+							log.Printf("SCHEDULER: bucket refresh done: %v", i)
 						}
 					}(i)
 				}
@@ -354,18 +364,21 @@ func (k *Kademlia) StartScheduler() {
 
 		for key, record := range k.dataStore.records {
 			if record.IsExpired(time.Now()) {
+				log.Printf("SCHEDULER: deleting expired record: %v", key)
 				k.dataStore.DelRecord(key)
 			} else if record.NeedsRepublish(time.Now(), k.rt.me) {
+				log.Printf("SCHEDULER: republishing record: %v", record)
 				record.Republish(time.Now())
 				go func(key [20]byte, rec *Record) {
 					k.IterativeStore(key, true)
-					log.Printf("republish done: %v", rec)
+					log.Printf("SCHEDULER: republish done: %v", rec)
 				}(key, record)
 			} else if record.NeedsReplicate(time.Now()) {
+				log.Printf("SCHEDULER: replicating record: %v", record)
 				record.Replicate(time.Now())
 				go func(key [20]byte, rec *Record) {
 					k.IterativeStore(key, false)
-					log.Printf("replicate done: %v", rec)
+					log.Printf("SCHEDULER: replicate done: %v", rec)
 				}(key, record)
 			}
 		}
@@ -374,8 +387,8 @@ func (k *Kademlia) StartScheduler() {
 }
 
 func (k *Kademlia) StoreFile(data []byte) string {
+	log.Printf("(StoreFile) data: %v", data)
 	rec := k.dataStore.Store(data, k.rt.me, time.Now())
-	log.Printf("iterativestore on rec: %v", rec)
 	k.IterativeStore(GetKey(rec.value), true)
 	return ToString(GetKey(rec.value))
 }
@@ -432,16 +445,4 @@ func (k *Kademlia) TestStore() { //manual testing
 	rec := k.dataStore.Store(testBytes, k.rt.me, time.Now())
 	log.Printf("iterativestore on rec: %v", rec)
 	k.IterativeStore(GetKey(testBytes), true)
-}
-
-func (kademlia *Kademlia) LookupContact(target *Contact) {
-	// TODO
-}
-
-func (kademlia *Kademlia) LookupData(hash string) {
-	// TODO
-}
-
-func (kademlia *Kademlia) Store(data []byte) {
-	// TODO
 }
