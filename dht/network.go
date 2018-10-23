@@ -18,6 +18,8 @@ type Network struct {
 	msgFct           *pb.MessageFactory
 	conn             *net.UDPConn
 	rMapLck          *sync.Mutex
+	stop             chan struct{}
+	isListening      bool
 }
 
 func NewNetwork(port, addr string) *Network {
@@ -26,7 +28,9 @@ func NewNetwork(port, addr string) *Network {
 		requestMap:       make(map[int32](chan *pb.Message)),
 		msgFct:           pb.NewMessageFactory(),
 		timedoutRequests: make(chan int32, 100),
-		rMapLck:          &sync.Mutex{}}
+		rMapLck:          &sync.Mutex{},
+		stop:             make(chan struct{}),
+		isListening:      false}
 	return netw
 }
 
@@ -44,15 +48,23 @@ func (k *Kademlia) InitConn() {
 	n.conn = serverConn
 }
 
+func (k *Kademlia) CloseConn() {
+	k.netw.isListening = false
+	close(k.netw.stop)
+	_ = k.netw.conn.Close()
+}
+
 func Listen(k *Kademlia) error {
 	network := k.netw
-	defer network.conn.Close()
-
+	network.isListening = true
 	buf := make([]byte, 4096)
 
 	log.Println("Listening on port " + network.port)
 	for {
 		select {
+		case <-network.stop:
+			log.Println("stopping listener")
+			return nil
 		case reqID := <-k.netw.timedoutRequests:
 			network.rMapLck.Lock()
 			returnCh, exists := network.requestMap[reqID]
@@ -70,6 +82,9 @@ func Listen(k *Kademlia) error {
 func (k *Kademlia) read(buf []byte) {
 	network := k.netw
 	n, addr, err := network.conn.ReadFromUDP(buf)
+	if !network.isListening {
+		return
+	}
 	if err != nil {
 		log.Println(err)
 		return
