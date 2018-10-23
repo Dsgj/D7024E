@@ -1,7 +1,7 @@
 package dht
 
 import (
-	pb "D7024E/dht/pb"
+	"D7024E/dht/pb"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil" //toggle log show/hide
@@ -42,14 +42,12 @@ func TestKademlia(t *testing.T) {
 
 	Testupdate(t, *kademlia1)
 }
-
 func TestnewRequest(t *testing.T, kademlia1 Kademlia) {
 	requestID := kademlia1.newRequest()
 	if kademlia1.reqCount != requestID+1 {
 		t.Errorf("Request count was incorrect, is: %d, should be: %d.\n", kademlia1.reqCount, requestID+1)
 	}
 }
-
 func Testupdate(t *testing.T, kademlia1 Kademlia) {
 
 	/* Checks at witch bucket index a kademliaID would be stored at, and saves the length of that bucket.
@@ -82,9 +80,7 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 	if lenOfBucket1 != lenOfBucket2 {
 		t.Errorf("Kademlia.Update() did let a node add itself. \n")
 	}
-
 }
-
 func TestKademlia_RandomID(t *testing.T) {
 	//creates a new instance of Kademlia
 	kademlia3 := NewKademlia(NewContact(NewRandomKademliaID(), "localhost:8000"), "1337") //NewKademlia( contact, port(string))
@@ -106,7 +102,6 @@ func TestKademlia_RandomID(t *testing.T) {
 		t.Errorf("The ID has been generated twice")
 	}
 }
-
 func TestKademlia_STORE(t *testing.T) {
 
 	contacts, kademlias, teardown := setupTestCase(t, 20)
@@ -198,6 +193,27 @@ func TestKademlia_FIND_VALUE(t *testing.T) {
 }
 func TestKademlia_FIND_NODE(t *testing.T) {
 
+	contacts, kademlias, teardown := setupTestCase(t, 20)
+
+	defer teardown(t)
+
+	respMsg, err, timeout := kademlias[0].FIND_NODE(contacts[10], contacts[19].ID.String())
+
+	if err != nil {
+		t.Errorf("FIND_NODE had an error: %d.\n", err)
+	}
+	if timeout {
+		t.Errorf("FIND_NODE got timeout!")
+	}
+
+	externContacts := respMsg
+	internContacts := kademlias[10].rt.FindClosestContacts(contacts[19].ID, 20, contacts[0])
+
+	for i := 0; i < 19; i++ {
+		if !externContacts[i].ID.Equals(internContacts[i].ID) {
+			t.Errorf("FIND_NODE was incorrect, got: %d, want: %d. \n", externContacts[i].ID, internContacts[i].ID)
+		}
+	}
 }
 func TestKademlia_PING(t *testing.T) {
 
@@ -253,7 +269,7 @@ func TestKademlia_IterativeFindNode(t *testing.T) {
 			t.Errorf("list of contacts was not sorted")
 		}
 	}
-	//fmt.Println(kademlias[2].netw.addr)
+
 }
 func TestKademlia_IterativeFindValue(t *testing.T) {
 	numNodes := 20
@@ -413,7 +429,6 @@ func TestPingRPC(t *testing.T) {
 			pb.Message_PING, respMsg.GetType())
 	}
 }
-
 func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	if num < 1 {
 		return nil, nil
@@ -436,7 +451,6 @@ func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	}
 	return contacts, kademlias
 }
-
 func setupTestCase(t *testing.T, num int) ([]Contact, []*Kademlia, func(t *testing.T)) {
 	t.Log("setup test case")
 	c, k := InitKademlias(num)
