@@ -2,7 +2,7 @@ package dht
 
 import (
 	pb "D7024E/dht/pb"
-	"log"
+	//"log"
 	"time"
 )
 
@@ -54,17 +54,20 @@ func (k *Kademlia) handleSTORE(msg *pb.Message) (*pb.Message, error) {
 	key := GetKey(data)
 	rec, exists := k.dataStore.GetRecord(key)
 	// testing
-	log.Printf("publisher(peer): %+v\n", msg.GetData().GetRecord().GetPublisher())
-	log.Printf("publish: %+v\n", msg.GetData().GetRecord().GetNewPublish())
-	log.Printf("value: %+v\n", msg.GetData().GetRecord().GetValue())
+	//log.Println("Handling store RPC")
+	//log.Printf("publisher(peer): %+v\n", msg.GetData().GetRecord().GetPublisher())
+	//log.Printf("publish: %+v\n", msg.GetData().GetRecord().GetNewPublish())
+	//log.Printf("value: %+v\n", msg.GetData().GetRecord().GetValue())
 	publisher := PeerToContact(msg.GetData().GetRecord().GetPublisher())
 	publAt := time.Unix(msg.GetData().GetRecord().GetPublishedAt(), 0)
 	if exists { // record exists in local store
 		if msg.GetData().GetRecord().GetNewPublish() { //republish, update time
 			rec.Republish(publAt)
+			//log.Println("Updated time of publish for record")
 		}
 	} else { // new record
 		k.dataStore.Store(data, publisher, publAt)
+		//log.Println("Added new record to store")
 	}
 	return nil, nil
 }
