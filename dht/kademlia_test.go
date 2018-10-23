@@ -122,28 +122,6 @@ func TestKademlia_STORE(t *testing.T) {
 func TestKademlia_FIND_VALUE(t *testing.T) {
 }
 func TestKademlia_FIND_NODE(t *testing.T) {
-	
-	contacts, kademlias, teardown := setupTestCase(t, 20)
-	
-	defer teardown(t)
-	
-	respMsg, err, timeout := kademlias[0].FIND_NODE(contacts[10], contacts[19].ID.String())
-	
-	if err != nil {
-		t.Errorf("FIND_NODE had an error: %d.\n", err)	
-	}
-	if timeout {
-		t.Errorf("FIND_NODE got timeout!")	
-	}
-	
-	externContacts := respMsg
-	internContacts := kademlias[10].rt.FindClosestContacts(contacts[19].ID, 20, contacts[0])
-	
-	for i := 0; i < 19; i++ {
-		if !externContacts[i].ID.Equals(internContacts[i].ID) {
-			t.Errorf("FIND_NODE was incorrect, got: %d, want: %d. \n", externContacts[i].ID, internContacts[i].ID)
-		}
-	}
 
 }
 func TestKademlia_PING(t *testing.T) {
@@ -195,4 +173,29 @@ func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	contacts := make([]Contact, 0)
 	for i := 0; i < num; i++ {
 		id := NewRandomKademliaID()
-		contacts = append(contacts, NewContact(
+		contacts = append(contacts, NewContact(id, "localhost:500"+fmt.Sprintf("%d", i)))
+		time.Sleep(time.Millisecond * 2)
+	}
+	kademlias := make([]*Kademlia, 0)
+	for i := 0; i < num; i++ {
+		k := NewKademlia(contacts[0], "500"+fmt.Sprintf("%d", i))
+		k.InitConn()
+		go Listen(k)
+		for _, c := range contacts {
+			k.Update(c)
+		}
+		kademlias = append(kademlias, k)
+	}
+	return contacts, kademlias
+}
+
+func setupTestCase(t *testing.T, num int) ([]Contact, []*Kademlia, func(t *testing.T)) {
+	t.Log("setup test case")
+	c, k := InitKademlias(num)
+	return c, k, func(t *testing.T) {
+		t.Log("teardown test case")
+		for _, kad := range k {
+			kad.CloseConn()
+		}
+	}
+}
