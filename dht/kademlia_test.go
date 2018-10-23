@@ -1,17 +1,18 @@
 package dht
 
 import (
+	pb "D7024E/dht/pb"
 	"encoding/hex"
 	"fmt"
-	//"io/ioutil" 	//toggle log show/hide
-	//"log"			//toggle log show/hide
+	"io/ioutil" //toggle log show/hide
+	"log"       //toggle log show/hide
 	"math/rand"
 	"testing"
 	"time"
 )
 
 func TestKademlia(t *testing.T) {
-	//log.SetOutput(ioutil.Discard) //toggle log show/hide
+	log.SetOutput(ioutil.Discard) //toggle log show/hide
 	fmt.Println("TestKademlia: ENTER!")
 
 	//creates a new instance of Kademlia
@@ -153,18 +154,27 @@ func TestKademlia_StartScheduler(t *testing.T) {
 
 }
 
-func TestPingExample(t *testing.T) {
-	contacts, kademlias := InitKademlias(20)
+func TestPingRPC(t *testing.T) {
+	contacts, kademlias, teardown := setupTestCase(t, 20)
+	defer teardown(t)
 	respMsg, err, timeout := kademlias[0].PING(contacts[5])
 	if err != nil {
-		fmt.Println(err)
+		t.Error(err)
 	}
 	if timeout {
-		fmt.Println("ping timed out")
+		t.Errorf("ping timed out")
 	}
 	fmt.Printf("ping response msg: %v\n", respMsg)
 
-	//do something with message, compare sender etc
+	sender := PeerToContact(respMsg.GetSender())
+	if !sender.Equals(&contacts[5]) {
+		t.Errorf("sender of ping response is incorrect, expected: %v, got: %v",
+			contacts[5], sender)
+	}
+	if respMsg.GetType() != pb.Message_PING {
+		t.Errorf("type of message is incorrect, expected: %s, got: %s",
+			pb.Message_PING, respMsg.GetType())
+	}
 }
 
 func InitKademlias(num int) ([]Contact, []*Kademlia) {
@@ -174,12 +184,12 @@ func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	contacts := make([]Contact, 0)
 	for i := 0; i < num; i++ {
 		id := NewRandomKademliaID()
-		contacts = append(contacts, NewContact(id, "localhost:100"+fmt.Sprintf("%d", i)))
+		contacts = append(contacts, NewContact(id, "localhost:500"+fmt.Sprintf("%d", i)))
 		time.Sleep(time.Millisecond * 2)
 	}
 	kademlias := make([]*Kademlia, 0)
 	for i := 0; i < num; i++ {
-		k := NewKademlia(contacts[0], "100"+fmt.Sprintf("%d", i))
+		k := NewKademlia(contacts[0], "500"+fmt.Sprintf("%d", i))
 		k.InitConn()
 		go Listen(k)
 		for _, c := range contacts {
@@ -188,4 +198,15 @@ func InitKademlias(num int) ([]Contact, []*Kademlia) {
 		kademlias = append(kademlias, k)
 	}
 	return contacts, kademlias
+}
+
+func setupTestCase(t *testing.T, num int) ([]Contact, []*Kademlia, func(t *testing.T)) {
+	t.Log("setup test case")
+	c, k := InitKademlias(num)
+	return c, k, func(t *testing.T) {
+		t.Log("teardown test case")
+		for _, kad := range k {
+			kad.CloseConn()
+		}
+	}
 }
