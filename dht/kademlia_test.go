@@ -55,11 +55,9 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 	 */
 
 	index := kademlia1.rt.getBucketIndex(NewKademliaID("fff0000000000000000000000000000000000000"))
-
 	lenOfBucket1 := kademlia1.rt.buckets[index].Len()
 
 	kademlia1.Update(NewContact(NewKademliaID("fff0000000000000000000000000000000000000"), "localhost:8000"))
-
 	lenOfBucket2 := kademlia1.rt.buckets[index].Len()
 
 	if lenOfBucket1 == lenOfBucket2 {
@@ -69,15 +67,13 @@ func Testupdate(t *testing.T, kademlia1 Kademlia) {
 	/* Checks if kademlia.Update lets a node att itself by checking the difference in the size of the bucked that it would have been in
 	 */
 
-	index = kademlia1.rt.getBucketIndex(NewKademliaID("ffffffff00000000000000000000000000000000"))
-
-	lenOfBucket1 = kademlia1.rt.buckets[index].Len()
-
+	index2 := kademlia1.rt.getBucketIndex(NewKademliaID("ffffffff00000000000000000000000000000000"))
+	fmt.Println(index2)
+	lenOfBucket3 := kademlia1.rt.buckets[index2].Len()
 	kademlia1.Update(NewContact(NewKademliaID("ffffffff00000000000000000000000000000000"), "localhost:8000"))
+	lenOfBucket4 := kademlia1.rt.buckets[index2].Len()
 
-	lenOfBucket2 = kademlia1.rt.buckets[index].Len()
-
-	if lenOfBucket1 != lenOfBucket2 {
+	if lenOfBucket3 != lenOfBucket4 {
 		t.Errorf("Kademlia.Update() did let a node add itself. \n")
 	}
 }
