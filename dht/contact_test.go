@@ -36,11 +36,15 @@ func TestPeerToContact(t *testing.T) {
 	contact1 := NewContact(NewKademliaID(id), ip)
 	peer := ContactToPeer(contact1)
 	contact2 := PeerToContact(peer)
-
+    contact3 := NewContact(NewRandomKademliaID(), "192.169.0.0")
 	contact2.CalcDistance(contact1.ID)
 	contact1.CalcDistance(contact2.ID)
-	contact1.String()
+
+    contact3.CalcDistance(contact1.ID)
+
+    contact1.String()
 	contact2.String()
+	contact3.String()
 
 
 	if !contact1.ID.Equals(contact2.ID) {
@@ -51,6 +55,9 @@ func TestPeerToContact(t *testing.T) {
 	}
 	if !contact1.distance.Equals(contact2.distance) {
 		t.Errorf("contact2.distance was incorrect, got: %s, want: %s.\n", contact2.distance, contact1.distance)
+	}
+    if !contact2.distance.Less(contact3.distance) {
+		t.Errorf("contact2.distance was incorrect, got: %s, want: %s.\n", contact2.distance, contact3.distance)
 	}
 }
 
