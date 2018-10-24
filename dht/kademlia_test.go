@@ -448,10 +448,10 @@ func InitKademlias(num int) ([]Contact, []*Kademlia) {
 	return contacts, kademlias
 }
 func setupTestCase(t *testing.T, num int) ([]Contact, []*Kademlia, func(t *testing.T)) {
-	t.Log("setup test case")
+	//t.Log("setup test case")
 	c, k := InitKademlias(num)
 	return c, k, func(t *testing.T) {
-		t.Log("teardown test case")
+		//t.Log("teardown test case")
 		for _, kad := range k {
 			kad.CloseConn()
 		}
