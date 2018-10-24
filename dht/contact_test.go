@@ -1,7 +1,6 @@
 package dht
 
 import (
-	//"fmt"
 	"testing"
 )
 
@@ -40,6 +39,9 @@ func TestPeerToContact(t *testing.T) {
 
 	contact2.CalcDistance(contact1.ID)
 	contact1.CalcDistance(contact2.ID)
+	contact1.String()
+	contact2.String()
+
 
 	if !contact1.ID.Equals(contact2.ID) {
 		t.Errorf("contact2.ID was incorrect, got: %s, want: %s.\n", contact2.ID, contact1.ID)
